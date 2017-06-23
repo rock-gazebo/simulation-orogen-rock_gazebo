@@ -8,6 +8,7 @@
 #define ROCK_GAZEBO_MODELTASK_TASK_HPP
 
 #include "rock_gazebo/ModelTaskBase.hpp"	
+#include <base/commands/Joints.hpp>
 #include <gazebo/physics/physics.hh>
 
 namespace rock_gazebo {
@@ -26,6 +27,8 @@ namespace rock_gazebo {
             sdf::ElementPtr sdf;
 
             Joint_V gazebo_joints;
+            base::Time lastCommandTime;
+            base::commands::Joints lastCommand;
 
             base::samples::Joints joints_in;
             void setupJoints();

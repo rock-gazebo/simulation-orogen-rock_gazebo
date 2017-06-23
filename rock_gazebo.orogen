@@ -31,6 +31,12 @@ task_context "ModelTask" do
 
     subclasses 'BaseTask'
 
+    # How long will the task consider that a value received on the joints_cmd
+    # port is valid.
+    #
+    # Defaults to one second
+    property 'joint_command_timeout', '/base/Time'
+
     # The model full name
     attribute "name", '/std/string'
 

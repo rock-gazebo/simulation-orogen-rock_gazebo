@@ -15,6 +15,7 @@ using namespace rock_gazebo;
 ModelTask::ModelTask(string const& name)
 	: ModelTaskBase(name)
 {
+    _joint_command_timeout.set(base::Time::fromSeconds(1.0));
     _cov_position.set(base::Matrix3d::Ones() * base::unset<double>());
     _cov_orientation.set(base::Matrix3d::Ones() * base::unset<double>());
     _cov_velocity.set(base::Matrix3d::Ones() * base::unset<double>());
@@ -123,6 +124,8 @@ bool ModelTask::startHook()
     if (! ModelTaskBase::startHook())
         return false;
 
+    lastCommandTime = base::Time();
+
     for(ExportedLinks::iterator it = exported_links.begin(); it != exported_links.end(); ++it)
     {
         it->second.last_update.fromSeconds(0);
@@ -200,33 +203,41 @@ void ModelTask::updateJoints(base::Time const& time)
     joints.time = time;
     _joints_samples.write( joints );
 
-    // If we have commands, pass them on to gazebo
-    if (_joints_cmd.readNewest( joints_in ) == RTT::NewData)
+    RTT::FlowStatus flow = _joints_cmd.readNewest( joints_in );
+    if (flow == RTT::NewData)
     {
-	const std::vector<std::string> &names= joints_in.names;
-	std::vector<std::string>::const_iterator result;
-        for(Joint_V::iterator it = gazebo_joints.begin(); it != gazebo_joints.end(); ++it )
-        {
+        lastCommandTime = time;
+        lastCommand = joints_in;
+    }
+    else if (lastCommandTime.isNull())
+        return;
+    else if (time - lastCommandTime >= _joint_command_timeout.get())
+        return;
+    else
+        joints_in = lastCommand;
+
+    const std::vector<std::string> &cmd_names= joints_in.names;
+    for(Joint_V::iterator it = gazebo_joints.begin(); it != gazebo_joints.end(); ++it )
+    {
 #if GAZEBO_MAJOR_VERSION >= 6
-            // Do not set fixed joints
-            if((*it)->HasType(physics::Base::FIXED_JOINT))
-                continue;
+        // Do not set fixed joints
+        if((*it)->HasType(physics::Base::FIXED_JOINT))
+            continue;
 #endif
 
-            // Do not set joints which are not part of the command
-            result = std::find(names.begin(),names.end(),(*it)->GetScopedName());
-	    if(result == names.end())
-                continue;
+        // Do not set joints which are not part of the command
+        auto result = find(cmd_names.begin(),cmd_names.end(),(*it)->GetScopedName());
+        if(result == names.end())
+            continue;
 
-            // Apply effort to joint
-            base::JointState j_cmd(joints_in[result-names.begin()]);
-            if( j_cmd.isEffort() )
-                (*it)->SetForce(0, j_cmd.effort );
-            else if( j_cmd.isPosition() )
-                (*it)->SetPosition(0, j_cmd.position );
-            else if( j_cmd.isSpeed() )
-                (*it)->SetVelocity(0, j_cmd.speed );
-        }
+        // Apply effort to joint
+        base::JointState j_cmd(joints_in[result-cmd_names.begin()]);
+        if( j_cmd.isEffort() )
+            (*it)->SetForce(0, j_cmd.effort );
+        else if( j_cmd.isPosition() )
+            (*it)->SetPosition(0, j_cmd.position );
+        else if( j_cmd.isSpeed() )
+            (*it)->SetVelocity(0, j_cmd.speed );
     }
 }
 
