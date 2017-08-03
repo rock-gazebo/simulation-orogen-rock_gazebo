@@ -4,6 +4,7 @@
 #include <gazebo/transport/transport.hh>
 #include <gazebo/sensors/sensors.hh>
 #include <sdf/sdf.hh>
+#include <regex>
 
 using namespace rock_gazebo;
 using namespace std;
@@ -78,6 +79,8 @@ void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
         sdfLink->Get<string>("name") + "::" +
         sdfSensor->Get<string>("name");
     baseTopicName = "~/" + model->GetName() + "/" + sdfLink->Get<string>("name") + "/" + sdfSensor->Get<string>("name");
+    std::regex gz_namespace_separator("::");
+    baseTopicName = std::regex_replace(baseTopicName, gz_namespace_separator, "/");
 
     string taskName = "gazebo:" + model->GetWorld()->GetName() + ":" + model->GetName() + ":" + sdfSensor->Get<string>("name");
     if(!provides())
