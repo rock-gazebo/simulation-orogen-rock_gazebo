@@ -9,8 +9,10 @@
 namespace rock_gazebo
 {
     struct LinkExport {
-        // The port name
+        // The RBS port name
         std::string port_name;
+        // The RBA port name
+        std::string rba_port_name;
         // The RBS sourceFrame, leave empty to use source_link
         std::string source_frame;
         // The RBS targetFrame, leave empty to use target_link
@@ -27,6 +29,12 @@ namespace rock_gazebo
         base::Matrix3d cov_orientation;
         // The velocity covariance
         base::Matrix3d cov_velocity;
+        // The angular velocity covariance
+        base::Matrix3d cov_angular_velocity;
+        // The acceleration covariance
+        base::Matrix3d cov_acceleration;
+        // The angular acceleration covariance
+        base::Matrix3d cov_angular_acceleration;
 
         LinkExport()
             : cov_position(base::Matrix3d::Ones() * base::unset<double>())

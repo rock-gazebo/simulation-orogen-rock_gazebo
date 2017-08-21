@@ -35,22 +35,25 @@ namespace rock_gazebo {
             void updateJoints(base::Time const& time);
 
             typedef base::samples::RigidBodyState RigidBodyState;
+            typedef base::samples::RigidBodyAcceleration RigidBodyAcceleration;
             typedef RTT::OutputPort<RigidBodyState> RBSOutPort;
+            typedef RTT::OutputPort<RigidBodyAcceleration> RBAOutPort;
 
             struct ExportedLink : public LinkExport
             {
                 LinkPtr source_link_ptr;
                 LinkPtr target_link_ptr;
                 RBSOutPort* port;
+                RBAOutPort* rba_port;
                 base::Time last_update;
 
                 ExportedLink()
-                    : port(NULL) { }
+                    : port(NULL), rba_port(NULL) { }
                 ExportedLink(LinkExport const& src)
                     : LinkExport(src)
-                    , port(NULL) { }
+                    , port(NULL), rba_port(NULL) { }
             };
-            typedef std::map<std::string, ExportedLink> ExportedLinks;
+            typedef std::vector<ExportedLink> ExportedLinks;
             ExportedLinks exported_links;
 
             void setupLinks();
