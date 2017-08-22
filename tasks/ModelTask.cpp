@@ -227,7 +227,7 @@ void ModelTask::updateJoints(base::Time const& time)
 
         // Do not set joints which are not part of the command
         auto result = find(cmd_names.begin(),cmd_names.end(),(*it)->GetScopedName());
-        if(result == names.end())
+        if(result == cmd_names.end())
             continue;
 
         // Apply effort to joint
