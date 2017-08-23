@@ -227,7 +227,7 @@ void ModelTask::updateJoints(base::Time const& time)
         lastJointCommandTime = time;
         lastJointCommand = joints_in;
     }
-    else if (lastJointCommandTime.isNull())
+    else if (flow == RTT::NoData)
         return;
     else if (time - lastJointCommandTime >= _joint_command_timeout.get())
         return;
@@ -312,7 +312,6 @@ void ModelTask::updateLinks(base::Time const& time)
         it->port->write(rbs);
 
         base::samples::RigidBodyAcceleration rba;
-        rba.invalidateOrientation();
         rba.cov_acceleration = it->cov_acceleration;
         rba.acceleration = base::Vector3d(
                     sourceInTarget_linear_acc.x,sourceInTarget_linear_acc.y,sourceInTarget_linear_acc.z);
@@ -333,7 +332,7 @@ void ModelTask::updateLinks(base::Time const& time)
             it->lastWrenchCommandTime = time;
             it->lastWrenchCommand = it->wrench_in;
         }
-        else if (it->lastWrenchCommandTime.isNull())
+        else if (flow == RTT::NoData)
             continue;
         else if (time - it->lastWrenchCommandTime >= _wrench_command_timeout.get()) // create _wrench_command_timeout to replace this
             continue;
@@ -378,6 +377,16 @@ void ModelTask::releaseLinks()
             ports()->removePort(it->port->getName());
             delete it->port;
             it->port = NULL;
+        }
+        if (it->rba_port != NULL) {
+            ports()->removePort(it->rba_port->getName());
+            delete it->rba_port;
+            it->rba_port = NULL;
+        }
+        if (it->wrench_port != NULL) {
+            ports()->removePort(it->wrench_port->getName());
+            delete it->wrench_port;
+            it->wrench_port = NULL;
         }
     }
     exported_links.clear();
