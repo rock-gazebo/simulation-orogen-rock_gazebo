@@ -91,8 +91,8 @@ void ModelTask::setupLinks()
         if (it->target_link != _world_frame.get())
             exported_link.target_link_ptr = model->GetLink( it->target_link );
         exported_link.port_name = it->port_name;
-        exported_link.rba_port_name = it->rba_port_name;
-        exported_link.wrench_port_name = it->wrench_port_name;
+        exported_link.rba_port_name = it->port_name + "_acceleration";
+        exported_link.wrench_port_name = it->port_name + "_wrench";
         exported_link.port_period = it->port_period;
 
         if (exported_link.source_link != _world_frame.get() && !exported_link.source_link_ptr)
@@ -107,12 +107,12 @@ void ModelTask::setupLinks()
         {
             for (vector<ExportedLink>::iterator it_el = exported_links.begin(); it_el != exported_links.end(); it_el++)
             {
-                if (it_el->port_name == it->port_name)
-                { gzthrow("ModelTask: provided port name " << it->port_name << " already used by another exported link"); }
-                else if (it_el->rba_port_name == it->rba_port_name)
-                { gzthrow("ModelTask: provided rba port name " << it->rba_port_name << " already used by another exported link"); }
-                else if (it_el->wrench_port_name == it->wrench_port_name)
-                { gzthrow("ModelTask: provided wrench port name " << it->wrench_port_name << " already used by another exported link"); }
+                if (it_el->port_name == exported_link.port_name)
+                { gzthrow("ModelTask: provided port name " << exported_link.port_name << " already used by another exported link"); }
+                else if (it_el->rba_port_name == exported_link.rba_port_name)
+                { gzthrow("ModelTask: provided rba port name " << exported_link.rba_port_name << " already used by another exported link"); }
+                else if (it_el->wrench_port_name == exported_link.wrench_port_name)
+                { gzthrow("ModelTask: provided wrench port name " << exported_link.wrench_port_name << " already used by another exported link"); }
             }
         }
 

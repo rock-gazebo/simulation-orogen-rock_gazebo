@@ -9,12 +9,8 @@
 namespace rock_gazebo
 {
     struct LinkExport {
-        // The RBS port name
+        // The port name
         std::string port_name;
-        // The RBA port name
-        std::string rba_port_name;
-        // The Wrench port name
-        std::string wrench_port_name;
         // The RBS sourceFrame, leave empty to use source_link
         std::string source_frame;
         // The RBS targetFrame, leave empty to use target_link

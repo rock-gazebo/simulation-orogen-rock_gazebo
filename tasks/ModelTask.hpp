@@ -45,6 +45,8 @@ namespace rock_gazebo {
             {
                 LinkPtr source_link_ptr;
                 LinkPtr target_link_ptr;
+                std::string rba_port_name;
+                std::string wrench_port_name;
                 WrenchInPort* wrench_port;
                 RBSOutPort* port;
                 RBAOutPort* rba_port;

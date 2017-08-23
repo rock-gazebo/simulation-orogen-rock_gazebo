@@ -70,9 +70,9 @@ task_context "ModelTask" do
     input_port "joints_cmd", "/base/samples/Joints"
     output_port "joints_samples", "/base/samples/Joints"
     # Link export
-    dynamic_input_port /.*/, '/base/samples/Wrench'
+    dynamic_input_port /_wrench$/, '/base/samples/Wrench'
     dynamic_output_port /.*/, '/base/samples/RigidBodyState'
-    dynamic_output_port /.*/, '/base/samples/RigidBodyAcceleration'
+    dynamic_output_port /_acceleration$/, '/base/samples/RigidBodyAcceleration'
 end
 
 task_context "ThrusterTask" do
