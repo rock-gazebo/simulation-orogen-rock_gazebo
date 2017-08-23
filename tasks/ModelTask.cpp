@@ -16,6 +16,7 @@ ModelTask::ModelTask(string const& name)
     : ModelTaskBase(name)
 {
     _joint_command_timeout.set(base::Time::fromSeconds(1.0));
+    _wrench_command_timeout.set(base::Time::fromSeconds(1.0));
     _cov_position.set(base::Matrix3d::Ones() * base::unset<double>());
     _cov_orientation.set(base::Matrix3d::Ones() * base::unset<double>());
     _cov_velocity.set(base::Matrix3d::Ones() * base::unset<double>());
@@ -91,6 +92,7 @@ void ModelTask::setupLinks()
             exported_link.target_link_ptr = model->GetLink( it->target_link );
         exported_link.port_name = it->port_name;
         exported_link.rba_port_name = it->rba_port_name;
+        exported_link.wrench_port_name = it->wrench_port_name;
         exported_link.port_period = it->port_period;
 
         if (exported_link.source_link != _world_frame.get() && !exported_link.source_link_ptr)
@@ -109,6 +111,8 @@ void ModelTask::setupLinks()
                 { gzthrow("ModelTask: provided port name " << it->port_name << " already used by another exported link"); }
                 else if (it_el->rba_port_name == it->rba_port_name)
                 { gzthrow("ModelTask: provided rba port name " << it->rba_port_name << " already used by another exported link"); }
+                else if (it_el->wrench_port_name == it->wrench_port_name)
+                { gzthrow("ModelTask: provided wrench port name " << it->wrench_port_name << " already used by another exported link"); }
             }
         }
 
@@ -120,12 +124,14 @@ void ModelTask::setupLinks()
         // Create the ports dynamicaly
         gzmsg << "ModelTask: exporting link "
             << world->GetName() + "/" + model->GetName() + "/" + it->source_link << "2" << it->target_link
-            << " through port " << it->port_name << " and rba port " << it->rba_port_name
+            << " through wrench port " << it->wrench_port_name << ", rbs port " << it->port_name << " and rba port " << it->rba_port_name
             << " updated every " << it->port_period.toSeconds() << " seconds."
             << endl;
 
+        it->wrench_port = new WrenchInPort( it->wrench_port_name );
         it->port = new RBSOutPort( it->port_name );
         it->rba_port = new RBAOutPort( it->rba_port_name );
+        ports()->addPort(*it->wrench_port);
         ports()->addPort(*it->port);
         ports()->addPort(*it->rba_port);
     }
@@ -136,7 +142,7 @@ bool ModelTask::startHook()
     if (! ModelTaskBase::startHook())
         return false;
 
-    lastCommandTime = base::Time();
+    lastJointCommandTime = base::Time();
 
     for(ExportedLinks::iterator it = exported_links.begin(); it != exported_links.end(); ++it)
     {
@@ -218,15 +224,15 @@ void ModelTask::updateJoints(base::Time const& time)
     RTT::FlowStatus flow = _joints_cmd.readNewest( joints_in );
     if (flow == RTT::NewData)
     {
-        lastCommandTime = time;
-        lastCommand = joints_in;
+        lastJointCommandTime = time;
+        lastJointCommand = joints_in;
     }
-    else if (lastCommandTime.isNull())
+    else if (lastJointCommandTime.isNull())
         return;
-    else if (time - lastCommandTime >= _joint_command_timeout.get())
+    else if (time - lastJointCommandTime >= _joint_command_timeout.get())
         return;
     else
-        joints_in = lastCommand;
+        joints_in = lastJointCommand;
 
     const std::vector<std::string> &cmd_names= joints_in.names;
     for(Joint_V::iterator it = gazebo_joints.begin(); it != gazebo_joints.end(); ++it )
@@ -262,7 +268,7 @@ void ModelTask::updateLinks(base::Time const& time)
         if (!(it->last_update.isNull()))
         {
             if ((time - it->last_update) <= it->port_period)
-                return;
+                break;
         }
 
         math::Pose source2world = math::Pose::Zero;
@@ -317,6 +323,29 @@ void ModelTask::updateLinks(base::Time const& time)
         it->rba_port->write(rba);
 
         it->last_update = time;
+    }
+
+    for(ExportedLinks::iterator it = exported_links.begin(); it != exported_links.end(); ++it)
+    {
+        RTT::FlowStatus flow = it->wrench_port->readNewest( it->wrench_in );
+        if (flow == RTT::NewData)
+        {
+            it->lastWrenchCommandTime = time;
+            it->lastWrenchCommand = it->wrench_in;
+        }
+        else if (it->lastWrenchCommandTime.isNull())
+            continue;
+        else if (time - it->lastWrenchCommandTime >= _wrench_command_timeout.get()) // create _wrench_command_timeout to replace this
+            continue;
+        else
+            it->wrench_in = it->lastWrenchCommand;
+
+        math::Pose source2world = it->source_link_ptr->GetWorldPose();
+
+        it->source_link_ptr->SetForce(source2world.rot.RotateVector(
+                                          math::Vector3(it->wrench_in.force[0], it->wrench_in.force[1], it->wrench_in.force[2])));
+        it->source_link_ptr->SetTorque(source2world.rot.RotateVector(
+                                           math::Vector3(it->wrench_in.torque[0], it->wrench_in.torque[1], it->wrench_in.torque[2])));
     }
 }
 
