@@ -6,11 +6,15 @@
 //====================================================================================== 
 
 #include "ModelTask.hpp"
+#include "Gazebo7Shims.hpp"
 #include <gazebo/common/Exception.hh>
 
 using namespace std;
 using namespace gazebo;
 using namespace rock_gazebo;
+using ignition::math::Vector3d;
+using ignition::math::Pose3d;
+using ignition::math::Quaterniond;
 
 ModelTask::ModelTask(string const& name)
 	: ModelTaskBase(name)
@@ -32,7 +36,7 @@ ModelTask::~ModelTask()
 
 void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
 {
-    string name = "gazebo:" + _world->GetName() + ":" + _model->GetName();
+    string name = "gazebo:" + GzGet((*_world), Name, ()) + ":" + _model->GetName();
     provides()->setName(name);
     _name.set(name);
 
@@ -42,7 +46,7 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
     if (_model_frame.get().empty())
         _model_frame.set(_model->GetName());
     if (_world_frame.get().empty())
-        _world_frame.set(_world->GetName());
+        _world_frame.set(GzGet((*_world), Name, ()));
 } 
 
 void ModelTask::setupJoints()
@@ -53,12 +57,12 @@ void ModelTask::setupJoints()
 #if GAZEBO_MAJOR_VERSION >= 6
         if((*joint)->HasType(physics::Base::FIXED_JOINT))
         {
-            gzmsg << "ModelTask: ignore fixed joint: " << world->GetName() + "/" + model->GetName() +
+            gzmsg << "ModelTask: ignore fixed joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
                 "/" + (*joint)->GetName() << endl;
             continue;
         }
 #endif
-        gzmsg << "ModelTask: found joint: " << world->GetName() + "/" + model->GetName() +
+        gzmsg << "ModelTask: found joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
                 "/" + (*joint)->GetName() << endl;
         joints_in.names.push_back( (*joint)->GetName() );
         joints_in.elements.push_back( base::JointState::Effort(0.0) );
@@ -120,7 +124,7 @@ void ModelTask::setupLinks()
     {
         // Create the ports dynamicaly
         gzmsg << "ModelTask: exporting link "
-            << world->GetName() + "/" + model->GetName() + "/" + it->second.source_link << "2" << it->second.target_link
+            << GzGet((*world), Name, ()) + "/" + model->GetName() + "/" + it->second.source_link << "2" << it->second.target_link
             << " through port " << it->first << " updated every " << it->second.port_period.toSeconds() << " seconds."
             << endl;
 
@@ -159,19 +163,19 @@ void ModelTask::updateHook()
 void ModelTask::warpModel(base::samples::RigidBodyState const& modelPose)
 {
     Eigen::Vector3d v(modelPose.position);
-    math::Vector3 model2world_v(v.x(), v.y(), v.z());
+    Vector3d model2world_v(v.x(), v.y(), v.z());
     Eigen::Quaterniond q(modelPose.orientation);
-    math::Quaternion model2world_q(q.w(), q.x(), q.y(), q.z());
-    math::Pose model2world;
+    Quaterniond model2world_q(q.w(), q.x(), q.y(), q.z());
+    Pose3d model2world;
     model2world.Set(model2world_v, model2world_q);
     model->SetWorldPose(model2world);
 }
 
 void ModelTask::updateModelPose(base::Time const& time)
 {
-    math::Pose model2world = model->GetWorldPose();
-    math::Vector3 model2world_angular_vel = model->GetRelativeAngularVel();
-    math::Vector3 model2world_vel = model->GetWorldLinearVel();
+    Pose3d model2world = GzGetIgn((*model), WorldPose, ());
+    Vector3d model2world_angular_vel = GzGetIgn((*model), RelativeAngularVel, ());
+    Vector3d model2world_vel = GzGetIgn((*model), WorldLinearVel, ());
 
     RigidBodyState rbs;
     rbs.invalidate();
@@ -179,16 +183,16 @@ void ModelTask::updateModelPose(base::Time const& time)
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
     rbs.position = base::Vector3d(
-        model2world.pos.x,model2world.pos.y,model2world.pos.z);
+        model2world.Pos().X(),model2world.Pos().Y(),model2world.Pos().Z());
     rbs.cov_position = _cov_position.get();
     rbs.orientation = base::Quaterniond(
-        model2world.rot.w,model2world.rot.x,model2world.rot.y,model2world.rot.z );
+        model2world.Rot().W(),model2world.Rot().X(),model2world.Rot().Y(),model2world.Rot().Z() );
     rbs.cov_orientation = _cov_orientation.get();
     rbs.velocity = base::Vector3d(
-        model2world_vel.x, model2world_vel.y, model2world_vel.z);
+        model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
     rbs.cov_velocity = _cov_velocity.get();
     rbs.angular_velocity = base::Vector3d(
-        model2world_angular_vel.x, model2world_angular_vel.y, model2world_angular_vel.z);
+        model2world_angular_vel.X(), model2world_angular_vel.Y(), model2world_angular_vel.Z());
     _pose_samples.write(rbs);
 }
 
@@ -208,8 +212,13 @@ void ModelTask::updateJoints(base::Time const& time)
 
         // Read joint angle from gazebo link
         names.push_back( (*it)->GetScopedName() );
+#if GAZEBO_MAJOR_VERSION >= 8
+        positions.push_back( (*it)->Position(0) );
+        speeds.push_back( (*it)->GetVelocity(0) );
+#else
         positions.push_back( (*it)->GetAngle(0).Radian() );
-        speeds.push_back( (float)(*it)->GetVelocity(0) );
+        speeds.push_back( (*it)->GetVelocity(0) );
+#endif
     }
     // fill the Joints samples and write
     base::samples::Joints joints = base::samples::Joints::Positions(positions,names);
@@ -272,37 +281,37 @@ void ModelTask::updateLinks(base::Time const& time)
                 return;
         }
 
-        math::Pose source2world = math::Pose::Zero;
-        math::Vector3 sourceInWorld_linear_vel  = math::Vector3::Zero;
-        math::Vector3 source_angular_vel;
+        Pose3d source2world = Pose3d::Zero;
+        Vector3d sourceInWorld_linear_vel  = Vector3d::Zero;
+        Vector3d source_angular_vel = Vector3d::Zero;
         if (it->second.source_link_ptr)
         {
-            source2world = it->second.source_link_ptr->GetWorldPose();
-            sourceInWorld_linear_vel  = it->second.source_link_ptr->GetWorldLinearVel();
-            source_angular_vel        = it->second.source_link_ptr->GetRelativeAngularVel();
+            source2world = GzGetIgn((*(it->second.source_link_ptr)), WorldPose, ());
+            sourceInWorld_linear_vel  = GzGetIgn((*(it->second.source_link_ptr)), WorldLinearVel, ());
+            source_angular_vel        = GzGetIgn((*(it->second.source_link_ptr)), RelativeAngularVel, ());
         }
 
-        math::Pose target2world = math::Pose::Zero;
+        Pose3d target2world = Pose3d::Zero;
         if (it->second.target_link_ptr)
-            target2world = it->second.target_link_ptr->GetWorldPose();
+            target2world        = GzGetIgn((*(it->second.target_link_ptr)), WorldPose, ());
 
-        math::Pose source2target( math::Pose(source2world - target2world) );
-        math::Vector3 sourceInTarget_linear_vel (target2world.rot.RotateVectorReverse(sourceInWorld_linear_vel));
+        Pose3d source2target( Pose3d(source2world - target2world) );
+        Vector3d sourceInTarget_linear_vel (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel));
 
         RigidBodyState rbs;
         rbs.sourceFrame = it->second.source_frame;
         rbs.targetFrame = it->second.target_frame;
         rbs.position = base::Vector3d(
-            source2target.pos.x,source2target.pos.y,source2target.pos.z);
+            source2target.Pos().X(),source2target.Pos().Y(),source2target.Pos().Z());
         rbs.cov_position = it->second.cov_position;
         rbs.orientation = base::Quaterniond(
-            source2target.rot.w,source2target.rot.x,source2target.rot.y,source2target.rot.z );
+            source2target.Rot().W(),source2target.Rot().X(),source2target.Rot().Y(),source2target.Rot().Z() );
         rbs.cov_orientation = it->second.cov_orientation;
         rbs.velocity = base::Vector3d(
-            sourceInTarget_linear_vel.x,sourceInTarget_linear_vel.y,sourceInTarget_linear_vel.z);
+            sourceInTarget_linear_vel.X(),sourceInTarget_linear_vel.Y(),sourceInTarget_linear_vel.Z());
         rbs.cov_velocity = it->second.cov_velocity;
         rbs.angular_velocity = base::Vector3d(
-            source_angular_vel.x,source_angular_vel.y,source_angular_vel.z);
+            source_angular_vel.X(),source_angular_vel.Y(),source_angular_vel.Z());
         rbs.time = time;
         it->second.port->write(rbs);
         it->second.last_update = time;
