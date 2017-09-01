@@ -93,9 +93,19 @@ void ModelTask::setupLinks()
         exported_link.port_period = it->port_period;
 
         if (exported_link.source_link != _world_frame.get() && !exported_link.source_link_ptr)
-        { gzthrow("ModelTask: cannot find exported source link " << it->source_link << " in model"); }
+        {
+            physics::Link_V const& links = model->GetLinks();
+            string link_names = std::accumulate(links.begin(), links.end(), string(),
+                    [](string s, physics::LinkPtr l) { return s + ", " + l->GetName(); });
+            gzthrow("ModelTask: cannot find exported source link " << it->source_link << " in model, known links: " << link_names);
+        }
         else if (exported_link.target_link != _world_frame.get() && !exported_link.target_link_ptr)
-        { gzthrow("ModelTask: cannot find exported target link " << it->target_link << " in model"); }
+        {
+            physics::Link_V const& links = model->GetLinks();
+            string link_names = std::accumulate(links.begin(), links.end(), string(),
+                    [](string s, physics::LinkPtr l) { return s + ", " + l->GetName(); });
+            gzthrow("ModelTask: cannot find exported target link " << it->target_link << " in model, known links: " << link_names);
+        }
         else if (it->port_name.empty())
         { gzthrow("ModelTask: no port name given in link export"); }
         else if (ports()->getPort(it->port_name))
