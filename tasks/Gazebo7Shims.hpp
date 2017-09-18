@@ -13,11 +13,11 @@
 #if GAZEBO_MAJOR_VERSION >= 8
 namespace rock_gazebo
 {
-    ignition::math::Matrix3d const& IgnMatrix3(ignition::math::Matrix3d const& matrix)
+    inline ignition::math::Matrix3d const& IgnMatrix3(ignition::math::Matrix3d const& matrix)
     {
         return matrix;
     }
-    ignition::math::Matrix3d const& GzMatrix3(ignition::math::Matrix3d const& matrix)
+    inline ignition::math::Matrix3d const& GzMatrix3(ignition::math::Matrix3d const& matrix)
     {
         return matrix;
     }
@@ -33,14 +33,14 @@ namespace rock_gazebo
 
 namespace rock_gazebo
 {
-    ignition::math::Matrix3d IgnMatrix3(gazebo::math::Matrix3 const& matrix)
+    inline ignition::math::Matrix3d IgnMatrix3(gazebo::math::Matrix3 const& matrix)
     {
 	return ignition::math::Matrix3d(
 	   matrix[0][0], matrix[0][1], matrix[0][2],
 	   matrix[1][0], matrix[1][1], matrix[1][2],
 	   matrix[2][0], matrix[2][1], matrix[2][2]);
     }
-    gazebo::math::Matrix3 GzMatrix3(ignition::math::Matrix3d const& matrix)
+    inline gazebo::math::Matrix3 GzMatrix3(ignition::math::Matrix3d const& matrix)
     {
 	return gazebo::math::Matrix3(
 	   matrix(0, 0), matrix(0, 1), matrix(0, 2),

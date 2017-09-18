@@ -27,30 +27,41 @@ namespace rock_gazebo {
             sdf::ElementPtr sdf;
 
             Joint_V gazebo_joints;
-            base::Time lastCommandTime;
-            base::commands::Joints lastCommand;
+            base::Time lastJointCommandTime;
+            base::commands::Joints lastJointCommand;
 
             base::samples::Joints joints_in;
             void setupJoints();
             void updateJoints(base::Time const& time);
 
+            typedef base::samples::Wrench Wrench;
             typedef base::samples::RigidBodyState RigidBodyState;
+            typedef base::samples::RigidBodyAcceleration RigidBodyAcceleration;
+            typedef RTT::InputPort<Wrench> WrenchInPort;
             typedef RTT::OutputPort<RigidBodyState> RBSOutPort;
+            typedef RTT::OutputPort<RigidBodyAcceleration> RBAOutPort;
 
             struct ExportedLink : public LinkExport
             {
                 LinkPtr source_link_ptr;
                 LinkPtr target_link_ptr;
+                std::string rba_port_name;
+                std::string wrench_port_name;
+                WrenchInPort* wrench_port;
                 RBSOutPort* port;
+                RBAOutPort* rba_port;
                 base::Time last_update;
+                base::samples::Wrench wrench_in;
+                base::samples::Wrench lastWrenchCommand;
+                base::Time lastWrenchCommandTime;
 
                 ExportedLink()
-                    : port(NULL) { }
+                    : wrench_port(NULL), port(NULL), rba_port(NULL) { }
                 ExportedLink(LinkExport const& src)
                     : LinkExport(src)
-                    , port(NULL) { }
+                    , wrench_port(NULL), port(NULL), rba_port(NULL) { }
             };
-            typedef std::map<std::string, ExportedLink> ExportedLinks;
+            typedef std::vector<ExportedLink> ExportedLinks;
             ExportedLinks exported_links;
 
             void setupLinks();

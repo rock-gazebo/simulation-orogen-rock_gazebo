@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "WorldTask.hpp"
+#include "Gazebo7Shims.hpp"
 
 using namespace rock_gazebo;
 using namespace gazebo;
@@ -22,8 +23,8 @@ WorldTask::~WorldTask()
 
 void WorldTask::setGazeboWorld(physics::WorldPtr _world)
 {
-    provides()->setName("gazebo:" + _world->GetName());
-    _name.set(_world->GetName());
+    provides()->setName("gazebo:" + GzGet((*_world), Name, ()));
+    _name.set(GzGet((*_world), Name, ()));
     world = _world;
 }
 
@@ -45,7 +46,7 @@ bool WorldTask::startHook()
 }
 void WorldTask::updateHook()
 {
-    common::Time sim_time = world->GetSimTime();
+    common::Time sim_time = GzGet((*world), SimTime, ());
     _time.write(
             base::Time::fromSeconds(sim_time.sec) +
             base::Time::fromMicroseconds(sim_time.nsec / 1000));

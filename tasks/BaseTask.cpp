@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "BaseTask.hpp"
+#include "Gazebo7Shims.hpp"
 
 using namespace rock_gazebo;
 
@@ -25,7 +26,7 @@ void BaseTask::setGazeboWorld(WorldPtr _world)
 
 base::Time BaseTask::getSimTime() const
 {
-    gazebo::common::Time sim_time = world->GetSimTime();
+    gazebo::common::Time sim_time = GzGet((*world), SimTime, ());
     return base::Time::fromSeconds(sim_time.sec) +
         base::Time::fromMicroseconds(sim_time.nsec / 1000);
 }
