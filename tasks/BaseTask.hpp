@@ -32,6 +32,9 @@ namespace rock_gazebo {
         WorldPtr world;
 
     public:
+        /** Returns the name of the underlying world */
+        std::string getWorldName() const;
+
         /** Returns the simulated time */
         base::Time getSimTime() const;
         /** Returns either the simulated or wall-clock time, depending on the

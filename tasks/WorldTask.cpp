@@ -24,8 +24,13 @@ WorldTask::~WorldTask()
 void WorldTask::setGazeboWorld(physics::WorldPtr _world)
 {
     provides()->setName("gazebo:" + GzGet((*_world), Name, ()));
-    _name.set(GzGet((*_world), Name, ()));
     world = _world;
+    _name.set(getWorldName());
+}
+
+std::string WorldTask::getWorldName() const
+{
+    return GzGet((*world), Name, ());
 }
 
 /// The following lines are template definitions for the various state machine

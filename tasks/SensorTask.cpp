@@ -69,12 +69,14 @@ void SensorTask::cleanupHook()
 }
 void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 {
+    BaseTask::setGazeboWorld( model->GetWorld() );
+
     sdf::ElementPtr sdfLink = sdfSensor->GetParent();
     this->gazeboModel = model;
     this->sdfSensor = sdfSensor;
 
     sensorFullName =
-        model->GetWorld()->GetName() + "::" +
+        getWorldName() + "::" +
         model->GetScopedName() + "::" +
         sdfLink->Get<string>("name") + "::" +
         sdfSensor->Get<string>("name");
@@ -82,11 +84,10 @@ void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
     std::regex gz_namespace_separator("::");
     baseTopicName = std::regex_replace(baseTopicName, gz_namespace_separator, "/");
 
-    string taskName = "gazebo:" + model->GetWorld()->GetName() + ":" + model->GetName() + ":" + sdfSensor->Get<string>("name");
+    string taskName = "gazebo:" + getWorldName() + ":" + model->GetName() + ":" + sdfSensor->Get<string>("name");
     if(!provides())
         throw std::runtime_error("GPSTask::provides returned NULL");
     provides()->setName(taskName);
     _name.set(taskName);
-    BaseTask::setGazeboWorld( model->GetWorld() );
 }
 

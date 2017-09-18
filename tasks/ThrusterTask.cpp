@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "ThrusterTask.hpp"
+#include "Gazebo7Shims.hpp"
 
 using namespace std;
 using namespace gazebo;
@@ -92,7 +93,9 @@ void ThrusterTask::cleanupHook()
 
 void ThrusterTask::setGazeboModel( ModelPtr model )
 {
-    string taskName = "gazebo:" + model->GetWorld()->GetName() + ":" + model->GetName() + ":gazebo_thruster";
+    string worldName = GzGet((*(model->GetWorld())), Name, ());
+
+    string taskName = "gazebo:" + worldName + ":" + model->GetName() + ":gazebo_thruster";
     provides()->setName(taskName);
     _name.set(taskName);
 

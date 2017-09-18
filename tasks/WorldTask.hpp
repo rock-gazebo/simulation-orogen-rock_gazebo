@@ -31,6 +31,8 @@ namespace rock_gazebo {
 	friend class WorldTaskBase;
         WorldPtr world;
 
+        std::string getWorldName() const;
+
     public:
         void setGazeboWorld(WorldPtr world);
 

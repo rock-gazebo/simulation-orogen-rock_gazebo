@@ -24,6 +24,11 @@ void BaseTask::setGazeboWorld(WorldPtr _world)
     world = _world;
 }
 
+std::string BaseTask::getWorldName() const
+{
+    return GzGet((*world), Name, ());
+}
+
 base::Time BaseTask::getSimTime() const
 {
     gazebo::common::Time sim_time = GzGet((*world), SimTime, ());
