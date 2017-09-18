@@ -27,6 +27,12 @@ namespace rock_gazebo
         base::Matrix3d cov_orientation;
         // The velocity covariance
         base::Matrix3d cov_velocity;
+        // The angular velocity covariance
+        base::Matrix3d cov_angular_velocity;
+        // The acceleration covariance
+        base::Matrix3d cov_acceleration;
+        // The angular acceleration covariance
+        base::Matrix3d cov_angular_acceleration;
 
         LinkExport()
             : cov_position(base::Matrix3d::Ones() * base::unset<double>())

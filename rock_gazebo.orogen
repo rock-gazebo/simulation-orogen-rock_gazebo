@@ -37,6 +37,12 @@ task_context "ModelTask" do
     # Defaults to one second
     property 'joint_command_timeout', '/base/Time'
 
+    # How long will the task consider that a value received on a external link
+    # wrench port is valid.
+    #
+    # Defaults to one second
+    property 'wrench_command_timeout', '/base/Time'
+
     # The model full name
     attribute "name", '/std/string'
 
@@ -64,7 +70,9 @@ task_context "ModelTask" do
     input_port "joints_cmd", "/base/samples/Joints"
     output_port "joints_samples", "/base/samples/Joints"
     # Link export
+    dynamic_input_port /_wrench$/, '/base/samples/Wrench'
     dynamic_output_port /.*/, '/base/samples/RigidBodyState'
+    dynamic_output_port /_acceleration$/, '/base/samples/RigidBodyAcceleration'
 end
 
 task_context "ThrusterTask" do
