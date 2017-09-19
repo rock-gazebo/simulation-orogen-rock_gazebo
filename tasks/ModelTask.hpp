@@ -74,6 +74,7 @@ namespace rock_gazebo {
             struct InternalJointExport
             {
                 bool permanent;
+                base::Time port_period;
                 std::vector<JointPtr> gazebo_joints;
 
                 base::samples::Joints joints_in;

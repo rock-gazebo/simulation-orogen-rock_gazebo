@@ -109,6 +109,7 @@ void ModelTask::setupJoints()
             export_setup.addJoint(gz_joint, joint_name);
         }
 
+        export_setup.port_period = export_request.port_period;
         export_setup.in_port  = new JointsInputPort(export_request.port_name + "_cmd");
         export_setup.out_port = new JointsOutputPort(export_request.port_name + "_samples");
         ports()->addPort(*export_setup.in_port);
@@ -197,12 +198,15 @@ bool ModelTask::startHook()
         return false;
 
     for(auto& exported_joint : joint_export_setup)
-        exported_joint.last_command.fromSeconds(0);
+    {
+        exported_joint.last_command = base::Time();
+        exported_joint.joints_out.time = base::Time();
+    }
 
     for(auto& exported_link : link_export_setup)
     {
-        exported_link.lastWrenchCommandTime.fromSeconds(0);
-        exported_link.last_update.fromSeconds(0);
+        exported_link.lastWrenchCommandTime = base::Time();
+        exported_link.last_update = base::Time();
     }
 
     return true;
@@ -262,6 +266,9 @@ void ModelTask::updateModelPose(base::Time const& time)
 
 void ModelTask::writeExportedJointSamples(base::Time const& time, InternalJointExport& exported_joint)
 {
+    if (time - exported_joint.joints_out.time < exported_joint.port_period)
+        return;
+
     size_t size = exported_joint.gazebo_joints.size();
     for (unsigned int i = 0; i < size; ++i)
     {
@@ -393,7 +400,9 @@ void ModelTask::updateLinks(base::Time const& time)
         else if (flow == RTT::NoData)
             continue;
         else if (time - exported_link.lastWrenchCommandTime >= _wrench_command_timeout.get()) // create _wrench_command_timeout to replace this
+        {
             continue;
+        }
         else
             exported_link.wrench_in = exported_link.lastWrenchCommand;
 

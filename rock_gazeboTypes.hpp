@@ -53,6 +53,8 @@ namespace rock_gazebo
         /** The joints that will be exported
          */
         std::vector<std::string> joints;
+        /** The period of update of the output port */
+        base::Time port_period;
     };
 }
 
