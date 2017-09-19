@@ -101,8 +101,8 @@ void ModelTask::setupJoints()
             string joint_name = gz_joint_name.substr(prefix.size(), std::string::npos);
 
             auto gz_joint = model->GetJoint(gz_joint_name);
-            if (!gz_joint)
-            { gzthrow("ModelTask: cannot find joint " << gz_joint_name << " requested in export"); }
+            if (!gz_joint || gz_joint->GetScopedName() != gz_joint_name)
+            { gzthrow("ModelTask: cannot find joint " << gz_joint_name << " requested in export, ModelTask expects a scoped name (i.e. including the enclosing model's name)"); }
             else if(gz_joint->HasType(physics::Base::FIXED_JOINT))
             { gzthrow("ModelTask: requesting to export joint " << gz_joint_name << " which is a fixed joint"); }
 
