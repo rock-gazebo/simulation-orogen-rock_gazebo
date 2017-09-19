@@ -292,7 +292,7 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
 
     if (flow == RTT::NewData)
         exported_joint.last_command = time;
-    else if (flow == RTT::NoData)
+    else if (exported_joint.last_command.isNull())
         return;
     else if (time - exported_joint.last_command >= _joint_command_timeout.get())
         return;
@@ -397,12 +397,10 @@ void ModelTask::updateLinks(base::Time const& time)
             exported_link.lastWrenchCommandTime = time;
             exported_link.lastWrenchCommand = exported_link.wrench_in;
         }
-        else if (flow == RTT::NoData)
+        else if (exported_link.lastWrenchCommandTime.isNull())
             continue;
-        else if (time - exported_link.lastWrenchCommandTime >= _wrench_command_timeout.get()) // create _wrench_command_timeout to replace this
-        {
+        else if (time - exported_link.lastWrenchCommandTime >= _wrench_command_timeout.get())
             continue;
-        }
         else
             exported_link.wrench_in = exported_link.lastWrenchCommand;
 
