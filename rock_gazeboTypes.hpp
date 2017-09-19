@@ -5,6 +5,7 @@
 #include <base/Time.hpp>
 #include <base/Eigen.hpp>
 #include <base/Float.hpp>
+#include <vector>
 
 namespace rock_gazebo
 {
@@ -38,6 +39,20 @@ namespace rock_gazebo
             : cov_position(base::Matrix3d::Ones() * base::unset<double>())
             , cov_orientation(base::Matrix3d::Ones() * base::unset<double>())
             , cov_velocity(base::Matrix3d::Ones() * base::unset<double>()) {}
+    };
+
+    struct JointExport {
+        /** Basename for the in/out ports. The actual port names is this name
+         * with either _cmd and _samples appended.
+         */
+        std::string port_name;
+        /** If given, remove this prefix from the joint names at the port
+         * interface
+         */
+        std::string prefix;
+        /** The joints that will be exported
+         */
+        std::vector<std::string> joints;
     };
 }
 

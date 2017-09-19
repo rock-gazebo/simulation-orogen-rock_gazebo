@@ -62,6 +62,7 @@ task_context "ModelTask" do
     property 'cov_velocity', '/base/Matrix3d'
 
     property "exported_links", "std/vector<rock_gazebo/LinkExport>"
+    property "exported_joints", "std/vector<rock_gazebo/JointExport>"
 
     # The model's pose if one wants to "warp"
     input_port 'model_pose', "/base/samples/RigidBodyState"
@@ -73,6 +74,10 @@ task_context "ModelTask" do
     dynamic_input_port /_wrench$/, '/base/samples/Wrench'
     dynamic_output_port /.*/, '/base/samples/RigidBodyState'
     dynamic_output_port /_acceleration$/, '/base/samples/RigidBodyAcceleration'
+    dynamic_input_port /_cmd$/, '/base/samples/Joints'
+    dynamic_output_port /_samples$/, '/base/samples/Joints'
+
+    exception_states 'INVALID_JOINT_COMMAND'
 end
 
 task_context "ThrusterTask" do

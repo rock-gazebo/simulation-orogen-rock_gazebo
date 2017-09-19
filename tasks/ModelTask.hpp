@@ -27,12 +27,9 @@ namespace rock_gazebo {
             sdf::ElementPtr sdf;
 
             Joint_V gazebo_joints;
-            base::Time lastJointCommandTime;
-            base::commands::Joints lastJointCommand;
 
             base::samples::Joints joints_in;
             void setupJoints();
-            void updateJoints(base::Time const& time);
 
             typedef base::samples::Wrench Wrench;
             typedef base::samples::RigidBodyState RigidBodyState;
@@ -41,7 +38,7 @@ namespace rock_gazebo {
             typedef RTT::OutputPort<RigidBodyState> RBSOutPort;
             typedef RTT::OutputPort<RigidBodyAcceleration> RBAOutPort;
 
-            struct ExportedLink : public LinkExport
+            struct InternalLinkExport : public LinkExport
             {
                 LinkPtr source_link_ptr;
                 LinkPtr target_link_ptr;
@@ -55,23 +52,60 @@ namespace rock_gazebo {
                 base::samples::Wrench lastWrenchCommand;
                 base::Time lastWrenchCommandTime;
 
-                ExportedLink()
-                    : wrench_port(NULL), port(NULL), rba_port(NULL) { }
-                ExportedLink(LinkExport const& src)
+                InternalLinkExport()
+                    : wrench_port(nullptr)
+                    , port(nullptr)
+                    , rba_port(nullptr) { }
+
+                InternalLinkExport(InternalLinkExport const& link) = default;
+
+                InternalLinkExport(LinkExport const& src)
                     : LinkExport(src)
-                    , wrench_port(NULL), port(NULL), rba_port(NULL) { }
+                    , wrench_port(nullptr)
+                    , port(nullptr)
+                    , rba_port(nullptr) { }
             };
-            typedef std::vector<ExportedLink> ExportedLinks;
-            ExportedLinks exported_links;
+
+            typedef std::vector<InternalLinkExport> LinkExportSetup;
+            LinkExportSetup link_export_setup;
+
+            typedef RTT::InputPort<base::samples::Joints>  JointsInputPort;
+            typedef RTT::OutputPort<base::samples::Joints> JointsOutputPort;
+            struct InternalJointExport
+            {
+                bool permanent;
+                std::vector<JointPtr> gazebo_joints;
+
+                base::samples::Joints joints_in;
+                JointsInputPort* in_port;
+                base::samples::Joints joints_out;
+                JointsOutputPort* out_port;
+                base::Time last_command;
+
+                InternalJointExport()
+                    : permanent(false)
+                    , in_port(nullptr)
+                    , out_port(nullptr)
+                {
+                }
+
+                void addJoint(JointPtr joint, std::string name);
+            };
+
+            typedef std::vector<InternalJointExport> JointExportSetup;
+            JointExportSetup joint_export_setup;
 
             void setupLinks();
             void warpModel(base::samples::RigidBodyState const& modelPose);
             void updateLinks(base::Time const& time);
+            void writeExportedJointSamples(base::Time const& time, InternalJointExport& exported_joint);
+            void readExportedJointCmd(base::Time const& time, InternalJointExport& exported_joint);
             void updateModelPose(base::Time const& time);
 
             std::string checkExportedLinkElements(std::string, std::string, std::string);
 
             void releaseLinks();
+            void releaseJoints();
 
         protected:
 
