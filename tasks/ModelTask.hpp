@@ -76,6 +76,7 @@ namespace rock_gazebo {
                 bool permanent;
                 base::Time port_period;
                 std::vector<JointPtr> gazebo_joints;
+                std::vector<std::string> expected_names;
 
                 base::samples::Joints joints_in;
                 JointsInputPort* in_port;

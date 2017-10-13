@@ -54,6 +54,7 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
 void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
 {
     gazebo_joints.push_back(joint);
+    expected_names.push_back(name);
     joints_in.names.push_back(name);
     joints_in.elements.push_back(base::JointState::Effort(0.0));
     joints_out.names.push_back(name);
@@ -306,8 +307,15 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
 
     for (unsigned int i = 0; i < size; ++i)
     {
-        base::JointState const& cmd = exported_joint.joints_in.elements[i];
+        base::JointState const& cmd   = exported_joint.joints_in.elements[i];
+        std::string const& name       = exported_joint.joints_in.names[i];
         gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
+        std::string const& expected_name = exported_joint.expected_names[i];
+        if (expected_name != name)
+        {
+            LOG_ERROR_S << "Expected " << i << "th joint to be " << expected_name << " but it is " << name << std::endl;
+            return exception(INVALID_JOINT_COMMAND);
+        }
 
         // Apply effort to joint
         if( cmd.isEffort() )
