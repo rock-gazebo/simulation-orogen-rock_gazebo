@@ -113,8 +113,11 @@ namespace rock_gazebo{
 
         void readInput( ConstIMUPtr &imuMsg);
 
+    protected:
+        void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
     private:
         typedef std::vector<std::pair<base::samples::RigidBodyState, base::samples::IMUSensors>> Samples;
+        ignition::math::Quaterniond initialOrientation;
         Samples samples;
     };
 }

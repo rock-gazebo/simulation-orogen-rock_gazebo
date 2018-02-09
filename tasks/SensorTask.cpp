@@ -73,7 +73,8 @@ void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 
     sdf::ElementPtr sdfLink = sdfSensor->GetParent();
     this->gazeboModel = model;
-    this->sdfSensor = sdfSensor;
+    this->sdfSensor   = sdfSensor;
+    this->gazeboLink  = model->GetChildLink(sdfLink->Get<string>("name"));
 
     sensorFullName =
         getWorldName() + "::" +
