@@ -127,6 +127,9 @@ task_context "ImuTask" do
     # The name of the world frame'
     property('world_frame', '/std/string', 'imu_world')
 
+    # The reference of the orientation samples
+    property 'reference', '/rock_gazebo/IMUReference', 'REFERENCE_INITIAL_POSE'
+
     # Provides orientation samples reported by the IMU sensor.'
     output_port('orientation_samples', '/base/samples/RigidBodyState')
 

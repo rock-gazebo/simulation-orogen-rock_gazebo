@@ -106,6 +106,7 @@ namespace rock_gazebo{
         void cleanupHook();
 
         typedef gazebo::physics::ModelPtr ModelPtr;
+        typedef gazebo::physics::LinkPtr LinkPtr;
         virtual void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
 
     protected:
@@ -117,6 +118,7 @@ namespace rock_gazebo{
         }
 
         ModelPtr gazeboModel;
+        LinkPtr gazeboLink;
         sdf::ElementPtr sdfSensor;
         gazebo::transport::SubscriberPtr subscriber;
         gazebo::transport::NodePtr node;

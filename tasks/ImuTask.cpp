@@ -1,10 +1,16 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "ImuTask.hpp"
+#include <gazebo/sensors/ImuSensor.hh>
+#include <gazebo/sensors/SensorsIface.hh>
 
 using namespace std;
 using namespace gazebo;
 using namespace rock_gazebo;
+
+typedef ignition::math::Pose3d IgnPose3d;
+typedef ignition::math::Vector3d IgnVector3d;
+typedef ignition::math::Quaterniond IgnQuaterniond;
 
 ImuTask::ImuTask(std::string const& name)
     : ImuTaskBase(name)
@@ -20,6 +26,11 @@ ImuTask::~ImuTask()
 {
 }
 
+void ImuTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
+{
+    ImuTaskBase::setGazeboModel(model, sdfSensor);
+    initialOrientation = gazeboLink->WorldPose().Rot();
+}
 
 
 /// The following lines are template definitions for the various state machine
@@ -40,6 +51,16 @@ bool ImuTask::startHook()
         return false;
 
     samples.clear();
+    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
+    gazebo::sensors::ImuSensor* imu = dynamic_cast<gazebo::sensors::ImuSensor*>(sensor.get());
+    if (_reference.get() == REFERENCE_HORIZONTAL_PLANE) {
+        IgnVector3d euler = initialOrientation.Euler();
+        IgnQuaterniond q  = IgnQuaterniond::EulerToQuaternion(0, 0, euler.Z());
+        imu->SetWorldToReferenceOrientation(q);
+    }
+    else if (_reference.get() == REFERENCE_ABSOLUTE) {
+        imu->SetWorldToReferenceOrientation(IgnQuaterniond::Identity);
+    }
     return true;
 }
 void ImuTask::updateHook()
