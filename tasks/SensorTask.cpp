@@ -86,7 +86,7 @@ void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 
     string taskName = "gazebo:" + getWorldName() + ":" + model->GetName() + ":" + sdfSensor->Get<string>("name");
     if(!provides())
-        throw std::runtime_error("GPSTask::provides returned NULL");
+        throw std::runtime_error("SensorTask::provides returned NULL");
     provides()->setName(taskName);
     _name.set(taskName);
 }
