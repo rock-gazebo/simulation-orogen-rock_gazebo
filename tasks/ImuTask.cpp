@@ -3,6 +3,7 @@
 #include "ImuTask.hpp"
 #include <gazebo/sensors/ImuSensor.hh>
 #include <gazebo/sensors/SensorsIface.hh>
+#include "Gazebo7Shims.hpp"
 
 using namespace std;
 using namespace gazebo;
@@ -29,7 +30,7 @@ ImuTask::~ImuTask()
 void ImuTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 {
     ImuTaskBase::setGazeboModel(model, sdfSensor);
-    initialOrientation = gazeboLink->WorldPose().Rot();
+    initialOrientation = GzGetIgn((*(gazeboLink)), WorldPose, ()).Rot();
 }
 
 
