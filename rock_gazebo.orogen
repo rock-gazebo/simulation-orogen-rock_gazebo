@@ -26,10 +26,8 @@ task_context "BaseTask" do
 end
 
 # Representation of a gazebo Model object
-task_context "ModelTask" do
+task_context "ModelTask", subclasses: 'BaseTask' do
     needs_configuration
-
-    subclasses 'BaseTask'
 
     # How long will the task consider that a value received on the joints_cmd
     # port is valid.
@@ -80,10 +78,8 @@ task_context "ModelTask" do
     exception_states 'INVALID_JOINT_COMMAND'
 end
 
-task_context "ThrusterTask" do
+task_context "ThrusterTask", subclasses: 'BaseTask' do
     needs_configuration
-
-    subclasses 'BaseTask'
 
     exception_states 'NO_TOPIC_CONNECTION'
 
@@ -96,31 +92,24 @@ task_context "ThrusterTask" do
     output_port "joint_samples", "/base/samples/Joints"
 end
 
-task_context "SensorTask" do
-    subclasses "BaseTask"
+task_context "SensorTask", subclasses: 'BaseTask' do
     abstract
 
     # The sensor's full name
     attribute "name", "/std/string"
 end
 
-task_context "LaserScanTask" do
-    subclasses 'SensorTask'
-
+task_context "LaserScanTask", subclasses: 'SensorTask' do
     # Laser line output port
     output_port "laser_scan_samples", "/base/samples/LaserScan"
 end
 
-task_context "CameraTask" do
-    subclasses 'SensorTask'
-
+task_context "CameraTask", subclasses: 'SensorTask' do
     # Camera output port
     output_port 'frame', ro_ptr('base::samples::frame::Frame')
 end
 
-task_context "ImuTask" do
-    subclasses 'SensorTask'
-
+task_context "ImuTask", subclasses: 'SensorTask' do
     # The name of the frame attached to the IMU'
     property('imu_frame', '/std/string', 'imu')
 
@@ -137,9 +126,7 @@ task_context "ImuTask" do
     output_port('imu_samples', '/base/samples/IMUSensors')
 end
 
-task_context "GPSTask" do
-    subclasses 'SensorTask'
-
+task_context "GPSTask", subclasses: 'SensorTask' do
     # The name of the frame attached to the GPS'
     property('gps_frame', '/std/string', 'gps')
 
