@@ -16,11 +16,15 @@ typedef ignition::math::Quaterniond IgnQuaterniond;
 ImuTask::ImuTask(std::string const& name)
     : ImuTaskBase(name)
 {
+    _cov_orientation.set(base::Matrix3d::Zero() * base::unknown<double>());
+    _cov_angular_velocity.set(base::Matrix3d::Zero() * base::unknown<double>());
 }
 
 ImuTask::ImuTask(std::string const& name, RTT::ExecutionEngine* engine)
     : ImuTaskBase(name, engine)
 {
+    _cov_orientation.set(base::Matrix3d::Zero() * base::unknown<double>());
+    _cov_angular_velocity.set(base::Matrix3d::Zero() * base::unknown<double>());
 }
 
 ImuTask::~ImuTask()
@@ -44,6 +48,11 @@ bool ImuTask::configureHook()
         return false;
 
     topicSubscribe(&ImuTask::readInput, baseTopicName + "/imu");
+
+    orientation.sourceFrame = _imu_frame.value();
+    orientation.targetFrame = _world_frame.value();
+    orientation.cov_orientation = _cov_orientation.value();
+    orientation.cov_angular_velocity = _cov_angular_velocity.value();
     return true;
 }
 bool ImuTask::startHook()
@@ -67,17 +76,6 @@ bool ImuTask::startHook()
 void ImuTask::updateHook()
 {
     ImuTaskBase::updateHook();
-
-    Samples samples;
-    { lock_guard<mutex> readGuard(readMutex);
-        samples = move(this->samples);
-    }
-
-    for (auto const& sample : samples)
-    {
-        _orientation_samples.write(sample.first);
-        _imu_samples.write(sample.second);
-    }
 }
 void ImuTask::errorHook()
 {
@@ -100,19 +98,15 @@ void ImuTask::readInput( ConstIMUPtr & imuMsg)
 
     base::Time stamp = getCurrentTime(imuMsg->stamp());
 
-    base::samples::IMUSensors imu_sensors;
-    base::samples::RigidBodyState orientation;
     orientation.time = stamp;
-    orientation.sourceFrame = _imu_frame.value();
-    orientation.targetFrame = _world_frame.value();
     orientation.orientation = base::Orientation(quat.w(),quat.x(),quat.y(),quat.z());
     orientation.angular_velocity = base::Vector3d(avel.x(),avel.y(),avel.z());
+    _orientation_samples.write(orientation);
 
+    base::samples::IMUSensors imu_sensors;
     imu_sensors.time = stamp;
     imu_sensors.mag  = base::getEuler(orientation.orientation);
     imu_sensors.gyro = base::Vector3d(avel.x(),avel.y(),avel.z());
     imu_sensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
-
-    samples.push_back(make_pair(orientation, imu_sensors));
+    _imu_samples.write(imu_sensors);
 }
-
