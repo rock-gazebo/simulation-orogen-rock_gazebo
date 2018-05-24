@@ -116,6 +116,12 @@ task_context "ImuTask", subclasses: 'SensorTask' do
     # The name of the world frame'
     property('world_frame', '/std/string', 'imu_world')
 
+    # The orientation covariance
+    property('cov_orientation', '/base/Matrix3d')
+
+    # The orientation covariance
+    property('cov_angular_velocity', '/base/Matrix3d')
+
     # The reference of the orientation samples
     property 'reference', '/rock_gazebo/IMUReference', 'REFERENCE_INITIAL_POSE'
 
@@ -170,4 +176,3 @@ task_context "GPSTask", subclasses: 'SensorTask' do
     # Longitude of the origin if use_proper_utm_conversion is false
     property('longitude_origin', "/base/Angle")
 end
-
