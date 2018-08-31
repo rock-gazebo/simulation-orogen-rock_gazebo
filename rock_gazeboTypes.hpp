@@ -5,14 +5,17 @@
 #include <base/Time.hpp>
 #include <base/Eigen.hpp>
 #include <base/Float.hpp>
+#include <gazebo/gazebo_config.h>
 #include <vector>
 
 namespace rock_gazebo
 {
     enum IMUReference {
         REFERENCE_INITIAL_POSE,
+#if GAZEBO_MAJOR_VERSION >= 8
         REFERENCE_HORIZONTAL_PLANE,
         REFERENCE_ABSOLUTE
+#endif
     };
 
     struct LinkExport {
