@@ -63,6 +63,7 @@ bool ImuTask::startHook()
     samples.clear();
     gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
     gazebo::sensors::ImuSensor* imu = dynamic_cast<gazebo::sensors::ImuSensor*>(sensor.get());
+#if GAZEBO_MAJOR_VERSION >= 8
     if (_reference.get() == REFERENCE_HORIZONTAL_PLANE) {
         IgnVector3d euler = initialOrientation.Euler();
         IgnQuaterniond q  = IgnQuaterniond::EulerToQuaternion(0, 0, euler.Z());
@@ -71,6 +72,7 @@ bool ImuTask::startHook()
     else if (_reference.get() == REFERENCE_ABSOLUTE) {
         imu->SetWorldToReferenceOrientation(IgnQuaterniond::Identity);
     }
+#endif
     return true;
 }
 void ImuTask::updateHook()
