@@ -49,7 +49,7 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
         _model_frame.set(_model->GetName());
     if (_world_frame.get().empty())
         _world_frame.set(GzGet((*_world), Name, ()));
-} 
+}
 
 void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
 {
@@ -70,6 +70,11 @@ void ModelTask::setupJoints()
     main_joint_export.permanent = true;
     main_joint_export.in_port = &_joints_cmd;
     main_joint_export.out_port = &_joints_samples;
+    string main_joint_prefix;
+    if (_joint_naming_scope.get() == JOINT_SCOPE_SELF) {
+        main_joint_prefix = model->GetScopedName() + "::";
+    }
+
     for (auto const& joint : gazebo_joints)
     {
 #if GAZEBO_MAJOR_VERSION >= 6
@@ -82,11 +87,13 @@ void ModelTask::setupJoints()
 #endif
         gzmsg << "ModelTask: found joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
                 "/" + joint->GetName() << endl;
-        main_joint_export.addJoint(joint, joint->GetScopedName());
+        string gz_joint_name = joint->GetScopedName();
+        string joint_name = gz_joint_name.substr(main_joint_prefix.size(),
+            std::string::npos);
+        main_joint_export.addJoint(joint, joint_name);
     }
     exported_joints.push_back(main_joint_export);
 
-    
     std::vector<JointExport> requested_exports =
         _exported_joints.get();
 
@@ -337,7 +344,7 @@ void ModelTask::updateLinks(base::Time const& time)
     for(auto& exported_link : link_export_setup)
     {
         //do not update the link if the last port writing happened
-        //in less then link_period. 
+        //in less then link_period.
         if (!(exported_link.last_update.isNull()))
         {
             if ((time - exported_link.last_update) <= exported_link.port_period)
@@ -499,4 +506,3 @@ string ModelTask::checkExportedLinkElements(string element_name, string test, st
         return test;
     }
 }
-

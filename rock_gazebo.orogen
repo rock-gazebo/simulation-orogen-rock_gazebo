@@ -29,6 +29,17 @@ end
 task_context "ModelTask", subclasses: 'BaseTask' do
     needs_configuration
 
+    # How the model's joints are expected to be named
+    #
+    # The default of JOINT_SCOPE_PARENT will prefix the joints
+    # by the full model name (e.g. root_model::child_model::j0).
+    # JOINT_SCOPE_SELF will scope them relatively to the root model
+    # (e.g. child_model::j0).
+    #
+    # The default is still JOINT_SCOPE_PARENT for backward compatibility
+    # reasons, but it is recommended to use JOINT_SCOPE_SELF
+    property 'joint_naming_scope', '/rock_gazebo/JointNamingScope', :JOINT_SCOPE_PARENT
+
     # How long will the task consider that a value received on the joints_cmd
     # port is valid.
     #

@@ -18,6 +18,11 @@ namespace rock_gazebo
 #endif
     };
 
+    enum JointNamingScope {
+        JOINT_SCOPE_SELF,
+        JOINT_SCOPE_PARENT
+    };
+
     struct LinkExport {
         // The port name
         std::string port_name;
