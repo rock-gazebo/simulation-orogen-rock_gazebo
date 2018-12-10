@@ -49,7 +49,7 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
         _model_frame.set(_model->GetName());
     if (_world_frame.get().empty())
         _world_frame.set(GzGet((*_world), Name, ()));
-} 
+}
 
 void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
 {
@@ -81,12 +81,12 @@ void ModelTask::setupJoints()
         }
 #endif
         gzmsg << "ModelTask: found joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
-                "/" + joint->GetName() << endl;
+            "/" + joint->GetName() << endl;
         main_joint_export.addJoint(joint, joint->GetScopedName());
     }
     exported_joints.push_back(main_joint_export);
 
-    
+
     std::vector<JointExport> requested_exports =
         _exported_joints.get();
 
@@ -252,16 +252,16 @@ void ModelTask::updateModelPose(base::Time const& time)
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
     rbs.position = base::Vector3d(
-        model2world.Pos().X(),model2world.Pos().Y(),model2world.Pos().Z());
+            model2world.Pos().X(),model2world.Pos().Y(),model2world.Pos().Z());
     rbs.cov_position = _cov_position.get();
     rbs.orientation = base::Quaterniond(
-        model2world.Rot().W(),model2world.Rot().X(),model2world.Rot().Y(),model2world.Rot().Z() );
+            model2world.Rot().W(),model2world.Rot().X(),model2world.Rot().Y(),model2world.Rot().Z() );
     rbs.cov_orientation = _cov_orientation.get();
     rbs.velocity = base::Vector3d(
-        model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
+            model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
     rbs.cov_velocity = _cov_velocity.get();
     rbs.angular_velocity = base::Vector3d(
-        model2world_angular_vel.X(), model2world_angular_vel.Y(), model2world_angular_vel.Z());
+            model2world_angular_vel.X(), model2world_angular_vel.Y(), model2world_angular_vel.Z());
     _pose_samples.write(rbs);
 }
 
@@ -337,7 +337,7 @@ void ModelTask::updateLinks(base::Time const& time)
     for(auto& exported_link : link_export_setup)
     {
         //do not update the link if the last port writing happened
-        //in less then link_period. 
+        //in less then link_period.
         if (!(exported_link.last_update.isNull()))
         {
             if ((time - exported_link.last_update) <= exported_link.port_period)
@@ -346,40 +346,59 @@ void ModelTask::updateLinks(base::Time const& time)
 
         Pose3d source2world = Pose3d::Zero;
         Vector3d sourceInWorld_linear_vel  = Vector3d::Zero;
-        Vector3d source_angular_vel = Vector3d::Zero;
+        Vector3d sourceInWorld_angular_vel = Vector3d::Zero;
         Vector3d sourceInWorld_linear_acc  = Vector3d::Zero;
-        Vector3d source_angular_acc = Vector3d::Zero;
+        Vector3d sourceInWorld_angular_acc = Vector3d::Zero;
         if (exported_link.source_link_ptr)
         {
             source2world = GzGetIgn((*(exported_link.source_link_ptr)), WorldPose, ());
-            sourceInWorld_linear_vel  = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearVel, ());
-            source_angular_vel        = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularVel, ());
-            sourceInWorld_linear_acc  = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearAccel, ());
-            source_angular_acc        = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularAccel, ());
+            sourceInWorld_linear_vel  =
+                GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearVel, ());
+            sourceInWorld_angular_vel =
+                GzGetIgn((*(exported_link.source_link_ptr)), WorldAngularVel, ());
+            sourceInWorld_linear_acc  =
+                GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearAccel, ());
+            sourceInWorld_angular_acc =
+                GzGetIgn((*(exported_link.source_link_ptr)), WorldAngularAccel, ());
         }
 
         Pose3d target2world = Pose3d::Zero;
         if (exported_link.target_link_ptr)
-            target2world        = GzGetIgn((*(exported_link.target_link_ptr)), WorldPose, ());
+            target2world = GzGetIgn((*(exported_link.target_link_ptr)), WorldPose, ());
 
         Pose3d source2target( Pose3d(source2world - target2world) );
-        Vector3d sourceInTarget_linear_vel (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel));
-        Vector3d sourceInTarget_linear_acc (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_acc));
+        Vector3d sourceInTarget_linear_vel =
+            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel);
+        Vector3d sourceInTarget_linear_acc =
+            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_acc);
+        Vector3d sourceInTarget_angular_vel =
+            target2world.Rot().RotateVectorReverse(sourceInWorld_angular_vel);
+        Vector3d sourceInTarget_angular_acc =
+            target2world.Rot().RotateVectorReverse(sourceInWorld_angular_acc);
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;
         rbs.targetFrame = exported_link.target_frame;
         rbs.position = base::Vector3d(
-            source2target.Pos().X(),source2target.Pos().Y(),source2target.Pos().Z());
+                source2target.Pos().X(),
+                source2target.Pos().Y(),
+                source2target.Pos().Z());
         rbs.cov_position = exported_link.cov_position;
         rbs.orientation = base::Quaterniond(
-            source2target.Rot().W(),source2target.Rot().X(),source2target.Rot().Y(),source2target.Rot().Z() );
+                source2target.Rot().W(),
+                source2target.Rot().X(),
+                source2target.Rot().Y(),
+                source2target.Rot().Z() );
         rbs.cov_orientation = exported_link.cov_orientation;
         rbs.velocity = base::Vector3d(
-            sourceInTarget_linear_vel.X(),sourceInTarget_linear_vel.Y(),sourceInTarget_linear_vel.Z());
+                sourceInTarget_linear_vel.X(),
+                sourceInTarget_linear_vel.Y(),
+                sourceInTarget_linear_vel.Z());
         rbs.cov_velocity = exported_link.cov_velocity;
         rbs.angular_velocity = base::Vector3d(
-            source_angular_vel.X(),source_angular_vel.Y(),source_angular_vel.Z());
+                sourceInTarget_angular_vel.X(),
+                sourceInTarget_angular_vel.Y(),
+                sourceInTarget_angular_vel.Z());
         rbs.cov_angular_velocity = exported_link.cov_angular_velocity;
         rbs.time = time;
         exported_link.port->write(rbs);
@@ -387,9 +406,13 @@ void ModelTask::updateLinks(base::Time const& time)
         base::samples::RigidBodyAcceleration rba;
         rba.cov_acceleration = exported_link.cov_acceleration;
         rba.acceleration = base::Vector3d(
-            sourceInTarget_linear_acc.X(),sourceInTarget_linear_acc.Y(),sourceInTarget_linear_acc.Z());
+                sourceInTarget_linear_acc.X(),
+                sourceInTarget_linear_acc.Y(),
+                sourceInTarget_linear_acc.Z());
         rba.angular_acceleration = base::Vector3d(
-            source_angular_acc.X(),source_angular_acc.Y(),source_angular_acc.Z());
+                sourceInTarget_angular_acc.X(),
+                sourceInTarget_angular_acc.Y(),
+                sourceInTarget_angular_acc.Z());
         rba.cov_angular_acceleration = exported_link.cov_angular_acceleration;
         rba.time = time;
         exported_link.rba_port->write(rba);
@@ -415,9 +438,14 @@ void ModelTask::updateLinks(base::Time const& time)
         Pose3d source2world = GzGetIgn((*exported_link.source_link_ptr), WorldPose, ());
 
         exported_link.source_link_ptr->SetForce(source2world.Rot().RotateVector(
-                    Vector3d(exported_link.wrench_in.force[0], exported_link.wrench_in.force[1], exported_link.wrench_in.force[2])));
+                    Vector3d(exported_link.wrench_in.force[0],
+                        exported_link.wrench_in.force[1],
+                        exported_link.wrench_in.force[2])));
         exported_link.source_link_ptr->SetTorque(source2world.Rot().RotateVector(
-                    Vector3d(exported_link.wrench_in.torque[0], exported_link.wrench_in.torque[1], exported_link.wrench_in.torque[2])));
+                    Vector3d(
+                        exported_link.wrench_in.torque[0],
+                        exported_link.wrench_in.torque[1],
+                        exported_link.wrench_in.torque[2])));
     }
 }
 
