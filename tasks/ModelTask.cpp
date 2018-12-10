@@ -367,14 +367,17 @@ void ModelTask::updateLinks(base::Time const& time)
             target2world = GzGetIgn((*(exported_link.target_link_ptr)), WorldPose, ());
 
         Pose3d source2target( Pose3d(source2world - target2world) );
-        Vector3d sourceInTarget_linear_vel =
-            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel);
-        Vector3d sourceInTarget_linear_acc =
-            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_acc);
-        Vector3d sourceInTarget_angular_vel =
-            target2world.Rot().RotateVectorReverse(sourceInWorld_angular_vel);
-        Vector3d sourceInTarget_angular_acc =
-            target2world.Rot().RotateVectorReverse(sourceInWorld_angular_acc);
+
+        auto velacc_reference_rot = _use_proper_reference_frames.get() ?
+            target2world.Rot() : source2world.Rot();
+        Vector3d linear_vel =
+            velacc_reference_rot.RotateVectorReverse(sourceInWorld_linear_vel);
+        Vector3d linear_acc =
+            velacc_reference_rot.RotateVectorReverse(sourceInWorld_linear_acc);
+        Vector3d angular_vel =
+            velacc_reference_rot.RotateVectorReverse(sourceInWorld_angular_vel);
+        Vector3d angular_acc =
+            velacc_reference_rot.RotateVectorReverse(sourceInWorld_angular_acc);
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;
@@ -391,14 +394,14 @@ void ModelTask::updateLinks(base::Time const& time)
                 source2target.Rot().Z() );
         rbs.cov_orientation = exported_link.cov_orientation;
         rbs.velocity = base::Vector3d(
-                sourceInTarget_linear_vel.X(),
-                sourceInTarget_linear_vel.Y(),
-                sourceInTarget_linear_vel.Z());
+                linear_vel.X(),
+                linear_vel.Y(),
+                linear_vel.Z());
         rbs.cov_velocity = exported_link.cov_velocity;
         rbs.angular_velocity = base::Vector3d(
-                sourceInTarget_angular_vel.X(),
-                sourceInTarget_angular_vel.Y(),
-                sourceInTarget_angular_vel.Z());
+                angular_vel.X(),
+                angular_vel.Y(),
+                angular_vel.Z());
         rbs.cov_angular_velocity = exported_link.cov_angular_velocity;
         rbs.time = time;
         exported_link.port->write(rbs);
@@ -406,13 +409,13 @@ void ModelTask::updateLinks(base::Time const& time)
         base::samples::RigidBodyAcceleration rba;
         rba.cov_acceleration = exported_link.cov_acceleration;
         rba.acceleration = base::Vector3d(
-                sourceInTarget_linear_acc.X(),
-                sourceInTarget_linear_acc.Y(),
-                sourceInTarget_linear_acc.Z());
+                linear_acc.X(),
+                linear_acc.Y(),
+                linear_acc.Z());
         rba.angular_acceleration = base::Vector3d(
-                sourceInTarget_angular_acc.X(),
-                sourceInTarget_angular_acc.Y(),
-                sourceInTarget_angular_acc.Z());
+                angular_acc.X(),
+                angular_acc.Y(),
+                angular_acc.Z());
         rba.cov_angular_acceleration = exported_link.cov_angular_acceleration;
         rba.time = time;
         exported_link.rba_port->write(rba);
