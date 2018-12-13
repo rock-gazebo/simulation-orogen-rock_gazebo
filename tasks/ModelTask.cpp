@@ -368,16 +368,14 @@ void ModelTask::updateLinks(base::Time const& time)
 
         Pose3d source2target( Pose3d(source2world - target2world) );
 
-        auto velacc_reference_rot = _use_proper_reference_frames.get() ?
-            target2world.Rot() : source2world.Rot();
         Vector3d linear_vel =
-            velacc_reference_rot.RotateVectorReverse(sourceInWorld_linear_vel);
+            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel);
         Vector3d linear_acc =
-            velacc_reference_rot.RotateVectorReverse(sourceInWorld_linear_acc);
+            target2world.Rot().RotateVectorReverse(sourceInWorld_linear_acc);
         Vector3d angular_vel =
-            velacc_reference_rot.RotateVectorReverse(sourceInWorld_angular_vel);
+            source2world.Rot().RotateVectorReverse(sourceInWorld_angular_vel);
         Vector3d angular_acc =
-            velacc_reference_rot.RotateVectorReverse(sourceInWorld_angular_acc);
+            target2world.Rot().RotateVectorReverse(sourceInWorld_angular_acc);
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;

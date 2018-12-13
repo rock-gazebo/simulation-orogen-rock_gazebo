@@ -29,13 +29,6 @@ end
 task_context "ModelTask", subclasses: 'BaseTask' do
     needs_configuration
 
-    # rock-gazebo was initially exporting velocities and accelerations in
-    # the body reference frame. Set this to true to switch to a consistent
-    # reference frame for all velocities and accelerations
-    #
-    # Note that true will become the default in the future.
-    property 'use_proper_reference_frames', 'bool', false
-
     # How long will the task consider that a value received on the joints_cmd
     # port is valid.
     #
