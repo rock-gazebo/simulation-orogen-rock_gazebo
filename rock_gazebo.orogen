@@ -58,6 +58,8 @@ task_context "ModelTask", subclasses: 'BaseTask' do
     property 'cov_orientation', '/base/Matrix3d'
     # The covariance matrix to be used as velocity covariance. Default is unset (NaN)
     property 'cov_velocity', '/base/Matrix3d'
+    # The covariance matrix to be used as angular velocity covariance. Default is unset (NaN)
+    property 'cov_angular_velocity', '/base/Matrix3d'
 
     property "exported_links", "std/vector<rock_gazebo/LinkExport>"
     property "exported_joints", "std/vector<rock_gazebo/JointExport>"

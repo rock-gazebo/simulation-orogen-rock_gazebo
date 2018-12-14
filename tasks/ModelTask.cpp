@@ -262,6 +262,7 @@ void ModelTask::updateModelPose(base::Time const& time)
     rbs.cov_velocity = _cov_velocity.get();
     rbs.angular_velocity = base::Vector3d(
         model2world_angular_vel.X(), model2world_angular_vel.Y(), model2world_angular_vel.Z());
+    rbs.cov_angular_velocity = _cov_angular_velocity.get();
     _pose_samples.write(rbs);
 }
 
