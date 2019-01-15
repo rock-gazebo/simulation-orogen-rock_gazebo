@@ -49,7 +49,7 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
         _model_frame.set(_model->GetName());
     if (_world_frame.get().empty())
         _world_frame.set(GzGet((*_world), Name, ()));
-} 
+}
 
 void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
 {
@@ -86,7 +86,7 @@ void ModelTask::setupJoints()
     }
     exported_joints.push_back(main_joint_export);
 
-    
+
     std::vector<JointExport> requested_exports =
         _exported_joints.get();
 
@@ -338,7 +338,7 @@ void ModelTask::updateLinks(base::Time const& time)
     for(auto& exported_link : link_export_setup)
     {
         //do not update the link if the last port writing happened
-        //in less then link_period. 
+        //in less then link_period.
         if (!(exported_link.last_update.isNull()))
         {
             if ((time - exported_link.last_update) <= exported_link.port_period)
@@ -347,16 +347,16 @@ void ModelTask::updateLinks(base::Time const& time)
 
         Pose3d source2world = Pose3d::Zero;
         Vector3d sourceInWorld_linear_vel  = Vector3d::Zero;
-        Vector3d source_angular_vel = Vector3d::Zero;
-        Vector3d sourceInWorld_linear_acc  = Vector3d::Zero;
-        Vector3d source_angular_acc = Vector3d::Zero;
+        Vector3d sourceRelative_angular_vel = Vector3d::Zero;
+        Vector3d sourceRelative_linear_acc  = Vector3d::Zero;
+        Vector3d sourceRelative_angular_acc = Vector3d::Zero;
         if (exported_link.source_link_ptr)
         {
             source2world = GzGetIgn((*(exported_link.source_link_ptr)), WorldPose, ());
-            sourceInWorld_linear_vel  = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearVel, ());
-            source_angular_vel        = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularVel, ());
-            sourceInWorld_linear_acc  = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearAccel, ());
-            source_angular_acc        = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularAccel, ());
+            sourceInWorld_linear_vel   = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearVel, ());
+            sourceRelative_angular_vel = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularVel, ());
+            sourceRelative_linear_acc   = GzGetIgn((*(exported_link.source_link_ptr)), RelativeLinearAccel, ());
+            sourceRelative_angular_acc  = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularAccel, ());
         }
 
         Pose3d target2world = Pose3d::Zero;
@@ -365,7 +365,6 @@ void ModelTask::updateLinks(base::Time const& time)
 
         Pose3d source2target( Pose3d(source2world - target2world) );
         Vector3d sourceInTarget_linear_vel (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel));
-        Vector3d sourceInTarget_linear_acc (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_acc));
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;
@@ -380,7 +379,7 @@ void ModelTask::updateLinks(base::Time const& time)
             sourceInTarget_linear_vel.X(),sourceInTarget_linear_vel.Y(),sourceInTarget_linear_vel.Z());
         rbs.cov_velocity = exported_link.cov_velocity;
         rbs.angular_velocity = base::Vector3d(
-            source_angular_vel.X(),source_angular_vel.Y(),source_angular_vel.Z());
+            sourceRelative_angular_vel.X(),sourceRelative_angular_vel.Y(),sourceRelative_angular_vel.Z());
         rbs.cov_angular_velocity = exported_link.cov_angular_velocity;
         rbs.time = time;
         exported_link.port->write(rbs);
@@ -388,9 +387,9 @@ void ModelTask::updateLinks(base::Time const& time)
         base::samples::RigidBodyAcceleration rba;
         rba.cov_acceleration = exported_link.cov_acceleration;
         rba.acceleration = base::Vector3d(
-            sourceInTarget_linear_acc.X(),sourceInTarget_linear_acc.Y(),sourceInTarget_linear_acc.Z());
+            sourceRelative_linear_acc.X(),sourceRelative_linear_acc.Y(),sourceRelative_linear_acc.Z());
         rba.angular_acceleration = base::Vector3d(
-            source_angular_acc.X(),source_angular_acc.Y(),source_angular_acc.Z());
+            sourceRelative_angular_acc.X(),sourceRelative_angular_acc.Y(),sourceRelative_angular_acc.Z());
         rba.cov_angular_acceleration = exported_link.cov_angular_acceleration;
         rba.time = time;
         exported_link.rba_port->write(rba);
