@@ -83,7 +83,7 @@ end
 task_context "ThrusterTask", subclasses: 'BaseTask' do
     needs_configuration
 
-    exception_states 'NO_TOPIC_CONNECTION'
+    exception_states 'NO_TOPIC_CONNECTION', 'NO_JOINT_NAMES'
 
     # Thruster full name
     attribute "name", "/std/string"
