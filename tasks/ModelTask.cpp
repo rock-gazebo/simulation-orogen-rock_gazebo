@@ -335,13 +335,14 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
 
 void ModelTask::updateLinks(base::Time const& time)
 {
+    auto simTime = getSimTime();
     for(auto& exported_link : link_export_setup)
     {
         //do not update the link if the last port writing happened
         //in less then link_period.
         if (!(exported_link.last_update.isNull()))
         {
-            if ((time - exported_link.last_update) <= exported_link.port_period)
+            if ((simTime - exported_link.last_update) < exported_link.port_period)
                 return;
         }
 
@@ -394,7 +395,7 @@ void ModelTask::updateLinks(base::Time const& time)
         rba.time = time;
         exported_link.rba_port->write(rba);
 
-        exported_link.last_update = time;
+        exported_link.last_update = simTime;
     }
 
     for(auto& exported_link : link_export_setup)
