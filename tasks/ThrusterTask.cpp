@@ -96,11 +96,11 @@ void ThrusterTask::cleanupHook()
     node->Fini();
 }
 
-void ThrusterTask::setGazeboModel( ModelPtr model )
+void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model )
 {
     string worldName = GzGet((*(model->GetWorld())), Name, ());
 
-    string taskName = "gazebo:" + worldName + ":" + model->GetName() + ":gazebo_thruster";
+    string taskName = "gazebo:" + worldName + ":" + model->GetName() + ":" + pluginName;
     provides()->setName(taskName);
     _name.set(taskName);
 
