@@ -80,6 +80,18 @@ task_context "ModelTask", subclasses: 'BaseTask' do
     exception_states 'INVALID_JOINT_COMMAND'
 end
 
+task_context "UnderwaterTask", subclasses: 'BaseTask' do
+    needs_configuration
+
+    exception_states 'NO_TOPIC_CONNECTION'
+
+    # Plugin full name
+    attribute "name", "/std/string"
+
+    # Water velocity input port
+    input_port "fluid_velocity", "/base/Vector3d"
+end
+
 task_context "ThrusterTask", subclasses: 'BaseTask' do
     needs_configuration
 
