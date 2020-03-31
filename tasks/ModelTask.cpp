@@ -127,6 +127,7 @@ void ModelTask::setupJoints()
         export_setup.in_port = new JointsInputPort(export_request.port_name + "_cmd");
         export_setup.out_port =
             new JointsOutputPort(export_request.port_name + "_samples");
+        export_setup.ignore_joint_names = export_request.ignore_joint_names;
         ports()->addPort(*export_setup.in_port);
         ports()->addPort(*export_setup.out_port);
         exported_joints.push_back(export_setup);
@@ -319,6 +320,9 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
 
     if (flow == RTT::NewData) {
         exported_joint.last_command = time;
+        if (!validateExportedJointCmd(exported_joint)) {
+            return exception(INVALID_JOINT_COMMAND);
+        }
     }
     else if (exported_joint.last_command.isNull()) {
         return;
@@ -328,25 +332,9 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
     }
 
     size_t size = exported_joint.gazebo_joints.size();
-    if (exported_joint.joints_in.elements.size() != size) {
-        LOG_ERROR_S
-            << "Received command with size "
-            << exported_joint.joints_in.elements.size()
-            << " expected " << size << std::endl;
-        return exception(INVALID_JOINT_COMMAND);
-    }
-
     for (unsigned int i = 0; i < size; ++i) {
-        base::JointState const& cmd   = exported_joint.joints_in.elements[i];
-        std::string const& name       = exported_joint.joints_in.names[i];
+        base::JointState const& cmd = exported_joint.joints_in.elements[i];
         gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
-        std::string const& expected_name = exported_joint.expected_names[i];
-        if (expected_name != name)
-            LOG_ERROR_S
-                << "Expected " << i << "th joint to be "
-                << expected_name << " but it is " << name << std::endl;
-            return exception(INVALID_JOINT_COMMAND);
-        }
 
         // Apply effort to joint
         if (cmd.isEffort()) {
@@ -362,9 +350,55 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
             LOG_ERROR_S
                 << "Received command that is neither a pure effort, "
                 << "position or speed" << std::endl;
+            LOG_ERROR_S
+                << "p=" << cmd.position
+                << " s=" << cmd.speed
+                << " e=" << cmd.effort
+                << " r=" << cmd.raw
+                << " a=" << cmd.acceleration << std::endl;
             return exception(INVALID_JOINT_COMMAND);
         }
     }
+}
+
+bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joint) const {
+    size_t size = exported_joint.gazebo_joints.size();
+    if (exported_joint.joints_in.elements.size() != size) {
+        LOG_ERROR_S
+            << "Received command with size "
+            << exported_joint.joints_in.elements.size()
+            << " expected " << size << std::endl;
+        return false;
+    }
+
+    if (exported_joint.ignore_joint_names) {
+        return true;
+    }
+
+    if (exported_joint.joints_in.names.size() != size) {
+        string joint_names = "";
+        for (auto const& s : exported_joint.expected_names) {
+            joint_names += " " + s;
+        }
+        LOG_ERROR_S
+            << "Received command with "
+            << exported_joint.joints_in.names.size()
+            << " names, expected " << size << ":" << joint_names << std::endl;
+        return false;
+    }
+
+    for (unsigned int i = 0; i < size; ++i) {
+        std::string const& name = exported_joint.joints_in.names[i];
+        std::string const& expected_name = exported_joint.expected_names[i];
+        if (name != expected_name) {
+            LOG_ERROR_S
+                << "Expected " << i << "th joint to be "
+                << expected_name << " but it is " << name << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void ModelTask::updateLinks(base::Time const& time)

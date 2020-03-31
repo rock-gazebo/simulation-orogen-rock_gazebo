@@ -75,6 +75,7 @@ namespace rock_gazebo {
             {
                 bool permanent;
                 base::Time port_period;
+                bool ignore_joint_names;
                 std::vector<JointPtr> gazebo_joints;
                 std::vector<std::string> expected_names;
 
@@ -100,8 +101,15 @@ namespace rock_gazebo {
             void setupLinks();
             void warpModel(base::samples::RigidBodyState const& modelPose);
             void updateLinks(base::Time const& time);
-            void writeExportedJointSamples(base::Time const& time, InternalJointExport& exported_joint);
-            void readExportedJointCmd(base::Time const& time, InternalJointExport& exported_joint);
+            void writeExportedJointSamples(
+                base::Time const& time, InternalJointExport& exported_joint
+            );
+            void readExportedJointCmd(
+                base::Time const& time, InternalJointExport& exported_joint
+            );
+            bool validateExportedJointCmd(
+                InternalJointExport const& exported_joint
+            ) const;
             void updateModelPose(base::Time const& time);
 
             std::string checkExportedLinkElements(std::string, std::string, std::string);

@@ -37,6 +37,12 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     # Defaults to one second
     property 'joint_command_timeout', '/base/Time'
 
+    # Whether the main joints_cmd input should have its names validated or not
+    #
+    # This controls only joints_cmd. Individually exported sets of joints can
+    # have different settings
+    property 'ignore_joint_names', '/bool', false
+
     # How long will the task consider that a value received on a external link
     # wrench port is valid.
     #
