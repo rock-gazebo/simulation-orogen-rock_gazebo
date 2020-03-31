@@ -85,6 +85,8 @@ namespace rock_gazebo {
                 JointsOutputPort* out_port;
                 base::Time last_command;
 
+                std::vector<double> position_offsets;
+
                 InternalJointExport()
                     : permanent(false)
                     , in_port(nullptr)

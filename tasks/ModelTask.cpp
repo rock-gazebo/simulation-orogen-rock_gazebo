@@ -91,6 +91,9 @@ void ModelTask::setupJoints()
               << "/" << joint->GetName() << endl;
         main_joint_export.addJoint(joint, joint->GetScopedName());
     }
+    main_joint_export.position_offsets.resize(
+        main_joint_export.gazebo_joints.size(), 0
+    );
     exported_joints.push_back(main_joint_export);
 
     std::vector<JointExport> requested_exports =
@@ -99,6 +102,14 @@ void ModelTask::setupJoints()
     for (auto const& export_request : requested_exports)
     {
         string prefix = export_request.prefix;
+        size_t export_size = export_request.joints.size();
+
+        if (! export_request.position_offsets.empty()) {
+            if (export_request.position_offsets.size() != export_size) {
+                gzthrow("ModelTask: joint export position_offsets field must either be "
+                        "empty, or of the same size of the joints");
+            }
+        }
 
         InternalJointExport export_setup;
         for (auto const& gz_joint_name : export_request.joints)
@@ -130,6 +141,14 @@ void ModelTask::setupJoints()
         export_setup.ignore_joint_names = export_request.ignore_joint_names;
         ports()->addPort(*export_setup.in_port);
         ports()->addPort(*export_setup.out_port);
+        if (export_request.position_offsets.empty()) {
+            export_setup.position_offsets.resize(
+                export_setup.gazebo_joints.size(), 0
+            );
+        }
+        else {
+            export_setup.position_offsets = export_request.position_offsets;
+        }
         exported_joints.push_back(export_setup);
     }
 
@@ -309,6 +328,7 @@ void ModelTask::writeExportedJointSamples(base::Time const& time, InternalJointE
 #else
         state.position = joint.GetAngle(0).Radian();
 #endif
+        state.position += exported_joint.position_offsets[i];
     }
     exported_joint.joints_out.time = time;
     exported_joint.out_port->write(exported_joint.joints_out);
@@ -335,13 +355,14 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
     for (unsigned int i = 0; i < size; ++i) {
         base::JointState const& cmd = exported_joint.joints_in.elements[i];
         gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
+        double position_offset = exported_joint.position_offsets[i];
 
         // Apply effort to joint
         if (cmd.isEffort()) {
             joint.SetForce(0, cmd.effort);
         }
         else if (cmd.isPosition()) {
-            joint.SetPosition(0, cmd.position);
+            joint.SetPosition(0, cmd.position - position_offset);
         }
         else if (cmd.isSpeed()) {
             joint.SetVelocity(0, cmd.speed);
