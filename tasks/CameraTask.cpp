@@ -38,21 +38,23 @@ bool CameraTask::configureHook()
 }
 bool CameraTask::startHook()
 {
-    if (! CameraTaskBase::startHook())
+    if (! CameraTaskBase::startHook()) {
         return false;
-    bnew_data = false;
+    }
+    hasNewSample = false;
     return true;
 }
 void CameraTask::updateHook()
 {
     CameraTaskBase::updateHook();
-    { lock_guard<mutex> readGuard(readMutex);
-        if(bnew_data)
-        {
-            _frame.write(output_frame);
-            bnew_data = false;
-        }
+
+    lock_guard<mutex> readGuard(readMutex);
+    if (!hasNewSample) {
+        return;
     }
+    hasNewSample = false;
+
+    _frame.write(output_frame);
 }
 void CameraTask::errorHook()
 {
@@ -68,7 +70,13 @@ void CameraTask::cleanupHook()
 }
 
 void CameraTask::readInput( ConstImageStampedPtr & imageMsg)
-{ lock_guard<mutex> readGuard(readMutex);
+{
+    if (state() != RUNNING) {
+        return;
+    }
+
+    lock_guard<mutex> readGuard(readMutex);
+
     const msgs::Image &image = imageMsg->image();
 
     // Convert the image data to RGB and copy to frame struct
@@ -89,6 +97,6 @@ void CameraTask::readInput( ConstImageStampedPtr & imageMsg)
     pframe->frame_status = base::samples::frame::STATUS_VALID;
     output_frame.reset(pframe);
     pframe = NULL;
-    bnew_data = true;
+    hasNewSample = true;
     delete [] data;
 }
