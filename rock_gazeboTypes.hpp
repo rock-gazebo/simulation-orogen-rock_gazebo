@@ -64,6 +64,13 @@ namespace rock_gazebo
         std::vector<std::string> joints;
         /** The period of update of the output port */
         base::Time port_period;
+        /** Whether to validate the names of the incoming joint commands,
+         * or just assume they are provided in the same order than \c joints
+         */
+        bool ignore_joint_names;
+
+        JointExport()
+            : ignore_joint_names(false) {}
     };
 }
 

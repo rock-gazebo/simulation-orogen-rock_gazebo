@@ -45,10 +45,12 @@ void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
     BaseTask::setGazeboWorld(_world);
     model = _model;
 
-    if (_model_frame.get().empty())
+    if (_model_frame.get().empty()) {
         _model_frame.set(_model->GetName());
-    if (_world_frame.get().empty())
+    }
+    if (_world_frame.get().empty()) {
         _world_frame.set(GzGet((*_world), Name, ()));
+    }
 }
 
 void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
@@ -68,24 +70,28 @@ void ModelTask::setupJoints()
     // Setup a joint export for the "main" interface
     InternalJointExport main_joint_export;
     main_joint_export.permanent = true;
+    main_joint_export.ignore_joint_names = _ignore_joint_names.get();
     main_joint_export.in_port = &_joints_cmd;
     main_joint_export.out_port = &_joints_samples;
     for (auto const& joint : gazebo_joints)
     {
 #if GAZEBO_MAJOR_VERSION >= 6
-        if(joint->HasType(physics::Base::FIXED_JOINT))
+        if (joint->HasType(physics::Base::FIXED_JOINT))
         {
-            gzmsg << "ModelTask: ignore fixed joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
-                "/" + joint->GetName() << endl;
+            gzmsg << "ModelTask: ignore fixed joint: "
+                  << GzGet((*world), Name, ())
+                  << "/" << model->GetName()
+                  << "/" << joint->GetName() << endl;
             continue;
         }
 #endif
-        gzmsg << "ModelTask: found joint: " << GzGet((*world), Name, ()) + "/" + model->GetName() +
-                "/" + joint->GetName() << endl;
+        gzmsg << "ModelTask: found joint (in/out): "
+              << GzGet((*world), Name, ())
+              << "/" << model->GetName()
+              << "/" << joint->GetName() << endl;
         main_joint_export.addJoint(joint, joint->GetScopedName());
     }
     exported_joints.push_back(main_joint_export);
-
 
     std::vector<JointExport> requested_exports =
         _exported_joints.get();
@@ -97,22 +103,31 @@ void ModelTask::setupJoints()
         InternalJointExport export_setup;
         for (auto const& gz_joint_name : export_request.joints)
         {
-            if (gz_joint_name.substr(0, prefix.size()) != prefix)
-            { gzthrow("ModelTask: the name of the exported joint " << gz_joint_name << " does not start with the expected prefix '" + prefix + "'"); }
+            if (gz_joint_name.substr(0, prefix.size()) != prefix) {
+                gzthrow("ModelTask: the name of the exported joint " << gz_joint_name
+                        << " does not start with the expected prefix '" + prefix + "'");
+            }
             string joint_name = gz_joint_name.substr(prefix.size(), std::string::npos);
 
             auto gz_joint = model->GetJoint(gz_joint_name);
-            if (!gz_joint || gz_joint->GetScopedName() != gz_joint_name)
-            { gzthrow("ModelTask: cannot find joint " << gz_joint_name << " requested in export, ModelTask expects a scoped name (i.e. including the enclosing model's name)"); }
-            else if(gz_joint->HasType(physics::Base::FIXED_JOINT))
-            { gzthrow("ModelTask: requesting to export joint " << gz_joint_name << " which is a fixed joint"); }
+            if (!gz_joint || gz_joint->GetScopedName() != gz_joint_name) {
+                gzthrow("ModelTask: cannot find joint " << gz_joint_name
+                        << " requested in export, ModelTask expects a scoped name "
+                        << "(i.e. including the enclosing model's name)");
+            }
+            else if (gz_joint->HasType(physics::Base::FIXED_JOINT)) {
+                gzthrow("ModelTask: requesting to export joint "
+                        << gz_joint_name << " which is a fixed joint");
+            }
 
             export_setup.addJoint(gz_joint, joint_name);
         }
 
         export_setup.port_period = export_request.port_period;
-        export_setup.in_port  = new JointsInputPort(export_request.port_name + "_cmd");
-        export_setup.out_port = new JointsOutputPort(export_request.port_name + "_samples");
+        export_setup.in_port = new JointsInputPort(export_request.port_name + "_cmd");
+        export_setup.out_port =
+            new JointsOutputPort(export_request.port_name + "_samples");
+        export_setup.ignore_joint_names = export_request.ignore_joint_names;
         ports()->addPort(*export_setup.in_port);
         ports()->addPort(*export_setup.out_port);
         exported_joints.push_back(export_setup);
@@ -252,24 +267,35 @@ void ModelTask::updateModelPose(base::Time const& time)
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
     rbs.position = base::Vector3d(
-        model2world.Pos().X(),model2world.Pos().Y(),model2world.Pos().Z());
+        model2world.Pos().X(),
+        model2world.Pos().Y(),
+        model2world.Pos().Z()
+    );
     rbs.cov_position = _cov_position.get();
     rbs.orientation = base::Quaterniond(
-        model2world.Rot().W(),model2world.Rot().X(),model2world.Rot().Y(),model2world.Rot().Z() );
+        model2world.Rot().W(),
+        model2world.Rot().X(),
+        model2world.Rot().Y(),
+        model2world.Rot().Z()
+    );
     rbs.cov_orientation = _cov_orientation.get();
     rbs.velocity = base::Vector3d(
         model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
     rbs.cov_velocity = _cov_velocity.get();
     rbs.angular_velocity = base::Vector3d(
-        model2world_angular_vel.X(), model2world_angular_vel.Y(), model2world_angular_vel.Z());
+        model2world_angular_vel.X(),
+        model2world_angular_vel.Y(),
+        model2world_angular_vel.Z()
+    );
     rbs.cov_angular_velocity = _cov_angular_velocity.get();
     _pose_samples.write(rbs);
 }
 
 void ModelTask::writeExportedJointSamples(base::Time const& time, InternalJointExport& exported_joint)
 {
-    if (time - exported_joint.joints_out.time < exported_joint.port_period)
+    if (time - exported_joint.joints_out.time < exported_joint.port_period) {
         return;
+    }
 
     size_t size = exported_joint.gazebo_joints.size();
     for (unsigned int i = 0; i < size; ++i)
@@ -290,47 +316,89 @@ void ModelTask::writeExportedJointSamples(base::Time const& time, InternalJointE
 
 void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport& exported_joint)
 {
-    RTT::FlowStatus flow = exported_joint.in_port->read( exported_joint.joints_in );
+    RTT::FlowStatus flow = exported_joint.in_port->read(exported_joint.joints_in);
 
-    if (flow == RTT::NewData)
+    if (flow == RTT::NewData) {
         exported_joint.last_command = time;
-    else if (exported_joint.last_command.isNull())
+        if (!validateExportedJointCmd(exported_joint)) {
+            return exception(INVALID_JOINT_COMMAND);
+        }
+    }
+    else if (exported_joint.last_command.isNull()) {
         return;
-    else if (time - exported_joint.last_command >= _joint_command_timeout.get())
+    }
+    else if (time - exported_joint.last_command >= _joint_command_timeout.get()) {
         return;
+    }
 
     size_t size = exported_joint.gazebo_joints.size();
-    if (exported_joint.joints_in.elements.size() != size)
-    {
-        LOG_ERROR_S << "Received command with size " << exported_joint.joints_in.elements.size() << " expected " << size << std::endl;
-        return exception(INVALID_JOINT_COMMAND);
-    }
-
-    for (unsigned int i = 0; i < size; ++i)
-    {
-        base::JointState const& cmd   = exported_joint.joints_in.elements[i];
-        std::string const& name       = exported_joint.joints_in.names[i];
+    for (unsigned int i = 0; i < size; ++i) {
+        base::JointState const& cmd = exported_joint.joints_in.elements[i];
         gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
-        std::string const& expected_name = exported_joint.expected_names[i];
-        if (expected_name != name)
-        {
-            LOG_ERROR_S << "Expected " << i << "th joint to be " << expected_name << " but it is " << name << std::endl;
-            return exception(INVALID_JOINT_COMMAND);
-        }
 
         // Apply effort to joint
-        if( cmd.isEffort() )
-            joint.SetForce(0, cmd.effort );
-        else if( cmd.isPosition() )
-            joint.SetPosition(0, cmd.position );
-        else if( cmd.isSpeed() )
-            joint.SetVelocity(0, cmd.speed );
-        else
-        {
-            LOG_ERROR_S << "Received command that is neither a pure effort, position or speed" << std::endl;
+        if (cmd.isEffort()) {
+            joint.SetForce(0, cmd.effort);
+        }
+        else if (cmd.isPosition()) {
+            joint.SetPosition(0, cmd.position);
+        }
+        else if (cmd.isSpeed()) {
+            joint.SetVelocity(0, cmd.speed);
+        }
+        else {
+            LOG_ERROR_S
+                << "Received command that is neither a pure effort, "
+                << "position or speed" << std::endl;
+            LOG_ERROR_S
+                << "p=" << cmd.position
+                << " s=" << cmd.speed
+                << " e=" << cmd.effort
+                << " r=" << cmd.raw
+                << " a=" << cmd.acceleration << std::endl;
             return exception(INVALID_JOINT_COMMAND);
         }
     }
+}
+
+bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joint) const {
+    size_t size = exported_joint.gazebo_joints.size();
+    if (exported_joint.joints_in.elements.size() != size) {
+        LOG_ERROR_S
+            << "Received command with size "
+            << exported_joint.joints_in.elements.size()
+            << " expected " << size << std::endl;
+        return false;
+    }
+
+    if (exported_joint.ignore_joint_names) {
+        return true;
+    }
+
+    if (exported_joint.joints_in.names.size() != size) {
+        string joint_names = "";
+        for (auto const& s : exported_joint.expected_names) {
+            joint_names += " " + s;
+        }
+        LOG_ERROR_S
+            << "Received command with "
+            << exported_joint.joints_in.names.size()
+            << " names, expected " << size << ":" << joint_names << std::endl;
+        return false;
+    }
+
+    for (unsigned int i = 0; i < size; ++i) {
+        std::string const& name = exported_joint.joints_in.names[i];
+        std::string const& expected_name = exported_joint.expected_names[i];
+        if (name != expected_name) {
+            LOG_ERROR_S
+                << "Expected " << i << "th joint to be "
+                << expected_name << " but it is " << name << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void ModelTask::updateLinks(base::Time const& time)
