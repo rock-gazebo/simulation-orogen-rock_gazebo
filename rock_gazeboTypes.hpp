@@ -62,6 +62,11 @@ namespace rock_gazebo
         /** The joints that will be exported
          */
         std::vector<std::string> joints;
+        /** Position offsets for each of the exported joint
+         *
+         * It either can be empty, or has to have the same size than \c joints
+         */
+        std::vector<double> position_offsets;
         /** The period of update of the output port */
         base::Time port_period;
         /** Whether to validate the names of the incoming joint commands,
