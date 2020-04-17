@@ -27,7 +27,7 @@ namespace rock_gazebo{
         /** TaskContext constructor for CameraTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
          * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         * 
+         *
          */
         CameraTask(std::string const& name, RTT::ExecutionEngine* engine);
 
@@ -96,8 +96,8 @@ namespace rock_gazebo{
 
     private:
         void readInput( ConstImageStampedPtr &imageMsg);
-        bool bnew_data;
-        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> output_frame;	
+        bool hasNewSample;
+        RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> output_frame;
     };
 }
 

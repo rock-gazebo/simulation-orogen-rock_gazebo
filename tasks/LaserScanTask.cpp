@@ -25,8 +25,9 @@ LaserScanTask::~LaserScanTask()
 
 bool LaserScanTask::configureHook()
 {
-    if (! LaserScanTaskBase::configureHook())
+    if (! LaserScanTaskBase::configureHook()) {
         return false;
+    }
 
     topicSubscribe(&LaserScanTask::readInput, baseTopicName + "/scan");
     return true;
@@ -34,9 +35,11 @@ bool LaserScanTask::configureHook()
 
 bool LaserScanTask::startHook()
 {
-    if (! LaserScanTaskBase::startHook())
+    if (! LaserScanTaskBase::startHook()) {
         return false;
-    scans.clear();
+    }
+
+    hasNewSample = false;
     return true;
 }
 
@@ -44,13 +47,13 @@ void LaserScanTask::updateHook()
 {
     LaserScanTaskBase::updateHook();
 
-    vector<base::samples::LaserScan> scans;
-    { lock_guard<mutex> readGuard(readMutex);
-        scans = move(this->scans);
+    lock_guard<mutex> readGuard(readMutex);
+    if (! hasNewSample) {
+        return;
     }
+    hasNewSample = false;
 
-    for (auto const& scan : scans)
-        _laser_scan_samples.write(scan);
+    _laser_scan_samples.write(scan);
 }
 
 void LaserScanTask::errorHook()
@@ -68,12 +71,17 @@ void LaserScanTask::cleanupHook()
     LaserScanTaskBase::cleanupHook();
 }
 
-void LaserScanTask::readInput( ConstLaserScanStampedPtr & laserScanMSG )
-{ lock_guard<mutex> readGuard(readMutex);
+void LaserScanTask::readInput(ConstLaserScanStampedPtr & laserScanMSG)
+{
+    if (state() != RUNNING) {
+        return;
+    }
+
+    lock_guard<mutex> readGuard(readMutex);
+
     double range_min = laserScanMSG->scan().range_min();
     double range_max = laserScanMSG->scan().range_max();
 
-    base::samples::LaserScan scan;
     scan.time = getCurrentTime(laserScanMSG->time());
     scan.minRange = meters_to_milimeters(range_min);
     scan.maxRange = meters_to_milimeters(range_max);
@@ -82,7 +90,8 @@ void LaserScanTask::readInput( ConstLaserScanStampedPtr & laserScanMSG )
 
     unsigned int scan_size = laserScanMSG->scan().ranges_size();
     scan.ranges.resize(scan_size);
-    for(unsigned int i = 0; i < scan_size; ++i) {
+
+    for (unsigned int i = 0; i < scan_size; ++i) {
         double range = laserScanMSG->scan().ranges(i);
 
         if (range >= range_max) {
@@ -95,7 +104,6 @@ void LaserScanTask::readInput( ConstLaserScanStampedPtr & laserScanMSG )
             scan.ranges[i] = meters_to_milimeters(range);
         }
     }
-    scans.push_back(scan);
+
+    hasNewSample = true;
 }
-
-

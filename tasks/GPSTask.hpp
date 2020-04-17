@@ -13,22 +13,26 @@
 namespace rock_gazebo{
 
     /*! \class GPSTask
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * 
+     * \brief The task context provides and requires services. It uses an
+     * ExecutionEngine to perform its functions. Essential interfaces are
+     * operations, data flow ports and properties. These interfaces have been
+     * defined using the oroGen specification. In order to modify the
+     * interfaces you should (re)use oroGen and rely on the associated
+     * workflow.
+     *
      * \details
      * The name of a TaskContext is primarily defined via:
-     \verbatim
-     deployment 'deployment_name'
-         task('custom_task_name','rock_gazebo::GPSTask')
-     end
-     \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+     * \verbatim
+     * deployment 'deployment_name'
+     *     task('custom_task_name','rock_gazebo::GPSTask')
+     * end
+     * \endverbatim
+     * It can be dynamically adapted when the deployment is called with a
+     * prefix argument.
      */
     class GPSTask : public GPSTaskBase
     {
-	friend class GPSTaskBase;
+        friend class GPSTaskBase;
 
     private:
         gps_base::UTMConverter utm_converter;
@@ -36,29 +40,36 @@ namespace rock_gazebo{
         double deviationVertical;
         void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
 
-        std::vector<gps_base::Solution> solutions;
-        gazebo::common::SphericalCoordinates gazebo_spherical;
+        bool hasNewSample;
+        gps_base::Solution solution;
+        gazebo::common::SphericalCoordinates gazeboSpherical;
 
     protected:
         void readInput(ConstGPSPtr &msg);
 
     public:
         /** TaskContext constructor for GPSTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make
+         *      it identifiable via nameservices.
+         * \param initial_state The initial TaskState of the TaskContext.
+         *      Default is Stopped state.
          */
         GPSTask(std::string const& name = "rock_gazebo::GPSTask");
 
         /** TaskContext constructor for GPSTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         * 
+         * \param name Name of the task. This name needs to be unique to make
+         *      it identifiable for nameservices.
+         * \param engine
+         *      The RTT Execution engine to be used for this task, which serialises
+         *      the execution of all commands, programs, state machines and incoming
+         *      events for a task.
+         *
          */
         GPSTask(std::string const& name, RTT::ExecutionEngine* engine);
 
-        /** Default deconstructor of GPSTask
+        /** Default destructor of GPSTask
          */
-	~GPSTask();
+        ~GPSTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the

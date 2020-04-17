@@ -35,16 +35,18 @@ GPSTask::~GPSTask()
 
 bool GPSTask::configureHook()
 {
-    if (! GPSTaskBase::configureHook())
+    if (! GPSTaskBase::configureHook()) {
         return false;
+    }
 
     topicSubscribe(&GPSTask::readInput, baseTopicName);
     return true;
 }
 bool GPSTask::startHook()
 {
-    if (! GPSTaskBase::startHook())
+    if (! GPSTaskBase::startHook()) {
         return false;
+    }
 
     if (_use_proper_utm_conversion.get())
     {
@@ -55,59 +57,66 @@ bool GPSTask::startHook()
     else
     {
         utm_converter.setNWUOrigin(Eigen::Vector3d::Zero());
-        gazebo_spherical.SetLatitudeReference(
-                ignition::math::Angle(_latitude_origin.value().getRad()));
-        gazebo_spherical.SetLongitudeReference(
-                ignition::math::Angle(_longitude_origin.value().getRad()));
+        gazeboSpherical.SetLatitudeReference(
+            ignition::math::Angle(_latitude_origin.value().getRad())
+        );
+        gazeboSpherical.SetLongitudeReference(
+            ignition::math::Angle(_longitude_origin.value().getRad())
+        );
     }
-    solutions.clear();
+    hasNewSample = false;
     return true;
 }
 
 void GPSTask::updateHook()
 {
-    vector<gps_base::Solution> solutions;
-    { lock_guard<mutex> readGuard(readMutex);
-        solutions = move(this->solutions);
-    }
-
-    for (auto const& solution : solutions)
-    {
-        _gps_solution.write(solution);
-        base::samples::RigidBodyState utm, position;
-
-        if (_use_proper_utm_conversion.get())
-        {
-            utm = utm_converter.convertToUTM(solution);
-            position = utm_converter.convertToNWU(utm);
-        }
-        else
-        {
-            ignition::math::Vector3d local = gazebo_spherical.LocalFromSpherical(
-                    ignition::math::Vector3d(solution.latitude, solution.longitude, solution.altitude));
-
-            utm.position = Eigen::Vector3d(local.X(), local.Y(), local.Z());
-            utm.cov_position = 1.0 * base::Matrix3d::Identity();
-            utm.cov_position(0, 0) = solution.deviationLongitude * solution.deviationLongitude;
-            utm.cov_position(1, 1) = solution.deviationLatitude * solution.deviationLatitude;
-            utm.cov_position(2, 2) = solution.deviationAltitude * solution.deviationAltitude;
-            
-            position.position = Eigen::Vector3d(local.Y(), -local.X(), local.Z());
-            position.cov_position = utm.cov_position;
-            std::swap(position.cov_position(0, 0), position.cov_position(1, 1));
-        }
-
-        utm.time = solution.time;
-        utm.sourceFrame = _gps_frame.value();
-        utm.targetFrame = _utm_frame.value();
-        _utm_samples.write(utm);
-
-        position.time = solution.time;
-        position.sourceFrame = _gps_frame.value();
-        position.targetFrame = _nwu_frame.value();
-        _position_samples.write(position);
-    }
     GPSTaskBase::updateHook();
+
+    lock_guard<mutex> readGuard(readMutex);
+    if (!hasNewSample) {
+        return;
+    }
+    hasNewSample = false;
+
+    _gps_solution.write(solution);
+    base::samples::RigidBodyState utm, position;
+
+    if (_use_proper_utm_conversion.get())
+    {
+        utm = utm_converter.convertToUTM(solution);
+        position = utm_converter.convertToNWU(utm);
+    }
+    else
+    {
+        ignition::math::Vector3d local = gazeboSpherical.LocalFromSpherical(
+            ignition::math::Vector3d(
+                solution.latitude, solution.longitude, solution.altitude
+            )
+        );
+
+        utm.position = Eigen::Vector3d(local.X(), local.Y(), local.Z());
+        utm.cov_position = 1.0 * base::Matrix3d::Identity();
+        utm.cov_position(0, 0) =
+            solution.deviationLongitude * solution.deviationLongitude;
+        utm.cov_position(1, 1) =
+            solution.deviationLatitude * solution.deviationLatitude;
+        utm.cov_position(2, 2) =
+            solution.deviationAltitude * solution.deviationAltitude;
+
+        position.position = Eigen::Vector3d(local.Y(), -local.X(), local.Z());
+        position.cov_position = utm.cov_position;
+        std::swap(position.cov_position(0, 0), position.cov_position(1, 1));
+    }
+
+    utm.time = solution.time;
+    utm.sourceFrame = _gps_frame.value();
+    utm.targetFrame = _utm_frame.value();
+    _utm_samples.write(utm);
+
+    position.time = solution.time;
+    position.sourceFrame = _gps_frame.value();
+    position.targetFrame = _nwu_frame.value();
+    _position_samples.write(position);
 }
 void GPSTask::errorHook()
 {
@@ -132,21 +141,27 @@ void GPSTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
         ->GetElement("horizontal")
         ->GetElement("noise");
     deviationHorizontal = 1;
-    if (h_noise->HasElement("stddev"))
+    if (h_noise->HasElement("stddev")) {
         deviationHorizontal = h_noise->Get<double>("stddev");
+    }
 
     sdf::ElementPtr v_noise = gps
         ->GetElement("position_sensing")
         ->GetElement("vertical")
         ->GetElement("noise");
     deviationVertical = 1;
-    if (v_noise->HasElement("stddev"))
+    if (v_noise->HasElement("stddev")) {
         deviationVertical = v_noise->Get<double>("stddev");
+    }
 }
 
-void GPSTask::readInput( ConstGPSPtr & msg)
-{ lock_guard<mutex> readGuard(readMutex);
-    gps_base::Solution solution;
+void GPSTask::readInput(ConstGPSPtr & msg) {
+    if (state() != RUNNING) {
+        return;
+    }
+
+    lock_guard<mutex> readGuard(readMutex);
+
     solution.time = getCurrentTime(msg->time());
     solution.latitude = msg->latitude_deg();
     solution.longitude = msg->longitude_deg();
@@ -158,6 +173,5 @@ void GPSTask::readInput( ConstGPSPtr & msg)
     solution.deviationAltitude = deviationVertical;
     solution.deviationLatitude = deviationHorizontal;
     solution.deviationLongitude = deviationHorizontal;
-    solutions.emplace_back(move(solution));
+    hasNewSample = true;
 }
-

@@ -38,6 +38,9 @@ bool SensorTask::configureHook()
     node = gazebo::transport::NodePtr( new gazebo::transport::Node() );
     node->Init();
 
+    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
+    sensor->SetActive(false);
+
     return true;
 }
 bool SensorTask::startHook()

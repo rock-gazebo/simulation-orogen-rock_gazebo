@@ -44,25 +44,19 @@ void ImuTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 
 bool ImuTask::configureHook()
 {
-    if (! ImuTaskBase::configureHook())
+    if (! ImuTaskBase::configureHook()) {
         return false;
-
-    topicSubscribe(&ImuTask::readInput, baseTopicName + "/imu");
+    }
 
     orientation.sourceFrame = _imu_frame.value();
     orientation.targetFrame = _world_frame.value();
     orientation.cov_orientation = _cov_orientation.value();
     orientation.cov_angular_velocity = _cov_angular_velocity.value();
-    return true;
-}
-bool ImuTask::startHook()
-{
-    if (! ImuTaskBase::startHook())
-        return false;
 
-    samples.clear();
     gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
-    gazebo::sensors::ImuSensor* imu = dynamic_cast<gazebo::sensors::ImuSensor*>(sensor.get());
+    gazebo::sensors::ImuSensor* imu =
+        dynamic_cast<gazebo::sensors::ImuSensor*>(sensor.get());
+
 #if GAZEBO_MAJOR_VERSION >= 8
     if (_reference.get() == REFERENCE_HORIZONTAL_PLANE) {
         IgnVector3d euler = initialOrientation.Euler();
@@ -73,6 +67,16 @@ bool ImuTask::startHook()
         imu->SetWorldToReferenceOrientation(IgnQuaterniond::Identity);
     }
 #endif
+
+    topicSubscribe(&ImuTask::readInput, baseTopicName + "/imu");
+    return true;
+}
+
+bool ImuTask::startHook()
+{
+    if (! ImuTaskBase::startHook()) {
+        return false;
+    }
     return true;
 }
 void ImuTask::updateHook()
@@ -92,23 +96,27 @@ void ImuTask::cleanupHook()
     ImuTaskBase::cleanupHook();
 }
 
-void ImuTask::readInput( ConstIMUPtr & imuMsg)
-{ lock_guard<mutex> readGuard(readMutex);
+void ImuTask::readInput(ConstIMUPtr & imuMsg) {
+    if (state() != RUNNING) {
+        return;
+    }
+
     const gazebo::msgs::Quaternion &quat = imuMsg->orientation();
-    const gazebo::msgs::Vector3d& avel =  imuMsg->angular_velocity();
+    const gazebo::msgs::Vector3d& avel = imuMsg->angular_velocity();
     const gazebo::msgs::Vector3d& linacc =  imuMsg->linear_acceleration();
 
     base::Time stamp = getCurrentTime(imuMsg->stamp());
 
     orientation.time = stamp;
-    orientation.orientation = base::Orientation(quat.w(),quat.x(),quat.y(),quat.z());
-    orientation.angular_velocity = base::Vector3d(avel.x(),avel.y(),avel.z());
-    _orientation_samples.write(orientation);
+    orientation.orientation =
+        base::Orientation(quat.w(), quat.x(), quat.y(), quat.z());
+    orientation.angular_velocity = base::Vector3d(avel.x(), avel.y(), avel.z());
 
-    base::samples::IMUSensors imu_sensors;
-    imu_sensors.time = stamp;
-    imu_sensors.mag  = base::getEuler(orientation.orientation);
-    imu_sensors.gyro = base::Vector3d(avel.x(),avel.y(),avel.z());
-    imu_sensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
-    _imu_samples.write(imu_sensors);
+    imuSensors.time = stamp;
+    imuSensors.mag  = base::getEuler(orientation.orientation);
+    imuSensors.gyro = base::Vector3d(avel.x(), avel.y(), avel.z());
+    imuSensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
+
+    _orientation_samples.write(orientation);
+    _imu_samples.write(imuSensors);
 }
