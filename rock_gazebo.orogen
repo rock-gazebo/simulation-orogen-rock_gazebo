@@ -90,7 +90,12 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     exception_states 'INVALID_JOINT_COMMAND'
 end
 
-task_context 'UnderwaterTask', subclasses: 'BaseTask' do
+task_context 'ModelPluginTask', subclasses: 'BaseTask' do
+    abstract
+    needs_configuration
+end
+
+task_context 'UnderwaterTask', subclasses: 'ModelPluginTask' do
     needs_configuration
 
     exception_states 'NO_TOPIC_CONNECTION'
@@ -102,7 +107,7 @@ task_context 'UnderwaterTask', subclasses: 'BaseTask' do
     input_port 'fluid_velocity', '/base/Vector3d'
 end
 
-task_context 'ThrusterTask', subclasses: 'BaseTask' do
+task_context 'ThrusterTask', subclasses: 'ModelPluginTask' do
     needs_configuration
 
     exception_states 'NO_TOPIC_CONNECTION', 'NO_JOINT_NAMES'
