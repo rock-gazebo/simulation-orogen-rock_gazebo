@@ -1,7 +1,7 @@
 # Generated from orogen/lib/orogen/templates/tasks/CMakeLists.txt
 
 include(rock_gazeboTaskLib)
-ADD_LIBRARY(${ROCK_GAZEBO_TASKLIB_NAME} SHARED 
+ADD_LIBRARY(${ROCK_GAZEBO_TASKLIB_NAME} SHARED
     ${ROCK_GAZEBO_TASKLIB_SOURCES})
 add_dependencies(${ROCK_GAZEBO_TASKLIB_NAME}
     regen-typekit)
@@ -19,6 +19,14 @@ INSTALL(TARGETS ${ROCK_GAZEBO_TASKLIB_NAME}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib/orocos)
 
+# If you are wondering. Yes. This really sucks badly
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${CMAKE_CURRENT_SOURCE_DIR}/ModelPluginTaskI.hpp
+    ${CMAKE_SOURCE_DIR}/.orogen/rock_gazebo/ModelPluginTaskI.hpp
+)
+
 INSTALL(FILES ${ROCK_GAZEBO_TASKLIB_HEADERS}
+    ModelPluginTaskI.hpp
     DESTINATION include/orocos/rock_gazebo)
 
