@@ -39,6 +39,16 @@ bool SensorTask::configureHook()
     node = gazebo::transport::NodePtr( new gazebo::transport::Node() );
     node->Init();
 
+    int attempt = 0;
+    while (!world->SensorsInitialized()) {
+        LOG_WARN_S << "waiting for sensors to initialize" << std::endl;
+        usleep(100000);
+        if (++attempt > 100) {
+            LOG_ERROR_S << "sensors did not initialize" << std::endl;
+            return false;
+        }
+    }
+
     mSensor = gazebo::sensors::get_sensor(sensorFullName);
     if (!mSensor) {
         LOG_ERROR_S << "no sensor named " << sensorFullName << " can be found"
