@@ -5,6 +5,7 @@ import_types_from 'base'
 import_types_from 'rock_gazeboTypes.hpp'
 import_types_from 'gps_base'
 
+using_library 'base-logging'
 using_library 'gazebo'
 using_library 'gazebo_thruster'
 

@@ -5,6 +5,7 @@
 #include <gazebo/sensors/sensors.hh>
 #include <sdf/sdf.hh>
 #include <regex>
+#include <base-logging/Logging.hpp>
 
 using namespace rock_gazebo;
 using namespace std;
@@ -38,8 +39,13 @@ bool SensorTask::configureHook()
     node = gazebo::transport::NodePtr( new gazebo::transport::Node() );
     node->Init();
 
-    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
-    sensor->SetActive(false);
+    mSensor = gazebo::sensors::get_sensor(sensorFullName);
+    if (!mSensor) {
+        LOG_ERROR_S << "no sensor named " << sensorFullName << " can be found"
+                    << std::endl;
+        return false;
+    }
+    mSensor->SetActive(false);
 
     return true;
 }
@@ -47,8 +53,7 @@ bool SensorTask::startHook()
 {
     if (! SensorTaskBase::startHook())
         return false;
-    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
-    sensor->SetActive(true);
+    mSensor->SetActive(true);
     return true;
 }
 void SensorTask::updateHook()
@@ -61,8 +66,7 @@ void SensorTask::errorHook()
 }
 void SensorTask::stopHook()
 {
-    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
-    sensor->SetActive(false);
+    mSensor->SetActive(false);
     SensorTaskBase::stopHook();
 }
 void SensorTask::cleanupHook()
