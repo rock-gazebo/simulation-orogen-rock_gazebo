@@ -1,12 +1,15 @@
 <package>
   <description brief="Rock components needed for the rock-gazebo bridge">
-  This oroGen project defines components that are needed for the rock-gazebo bridge. They are not meant to be used standalone: the simulation/rock_gazebo package uses them to expose gazebo simulations to a Rock system
+  This oroGen project defines components that are needed for the rock-gazebo
+  bridge. They are not meant to be used standalone: the simulation/rock_gazebo
+  package uses them to expose gazebo simulations to a Rock system
   </description>
   <author>Thomio Watanabe/thomio.watanabe@fieb.org.br</author>
-  <license></license>
-  <url>http://</url>
-  <logo>http://</logo>
+  <author>Sylvain Joyeux/sylvain.joyeux@tidewise.io</author>
+  <maintainer>Sylvain Joyeux/sylvain.joyeux@tidewise.io</maintainer>
+  <license>LGPLv2 or later</license>
   <depend package="base/cmake" />
+  <depend package="base/logging" />
   <depend package="base/orogen/types" />
   <depend package="simulation/gazebo" />
   <depend package="simulation/gazebo_thruster" />

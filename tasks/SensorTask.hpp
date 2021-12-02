@@ -4,6 +4,7 @@
 #define ROCK_GAZEBO_SENSORTASK_TASK_HPP
 
 #include "rock_gazebo/SensorTaskBase.hpp"
+#include <gazebo/sensors/sensors.hh>
 #include <gazebo/transport/Node.hh>
 
 namespace rock_gazebo{
@@ -12,7 +13,7 @@ namespace rock_gazebo{
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
      * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * 
+     *
      * \details
      * The name of a TaskContext is primarily defined via:
      \verbatim
@@ -26,8 +27,7 @@ namespace rock_gazebo{
     {
 	friend class SensorTaskBase;
     protected:
-
-
+        gazebo::sensors::SensorPtr mSensor;
 
     public:
         /** TaskContext constructor for SensorTask
@@ -39,7 +39,7 @@ namespace rock_gazebo{
         /** TaskContext constructor for SensorTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
          * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         * 
+         *
          */
         SensorTask(std::string const& name, RTT::ExecutionEngine* engine);
 
