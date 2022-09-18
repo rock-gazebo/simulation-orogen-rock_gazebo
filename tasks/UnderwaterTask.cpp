@@ -40,7 +40,7 @@ void UnderwaterTask::setGazeboModel( std::string const& pluginName, ModelPtr mod
 {
     string worldName = GzGet((*(model->GetWorld())), Name, ());
 
-    string taskName = "gazebo:" + worldName + ":" + model->GetName() + ":" + pluginName;
+    string taskName = "gazebo::" + worldName + "::" + model->GetName() + "::" + pluginName;
     provides()->setName(taskName);
     _name.set(taskName);
 

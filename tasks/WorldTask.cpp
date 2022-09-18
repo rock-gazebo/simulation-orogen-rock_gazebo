@@ -23,7 +23,7 @@ WorldTask::~WorldTask()
 
 void WorldTask::setGazeboWorld(physics::WorldPtr _world)
 {
-    provides()->setName("gazebo:" + GzGet((*_world), Name, ()));
+    provides()->setName("gazebo::" + GzGet((*_world), Name, ()));
     world = _world;
     _name.set(getWorldName());
 }

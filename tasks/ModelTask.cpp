@@ -38,7 +38,7 @@ ModelTask::~ModelTask()
 
 void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
 {
-    string name = "gazebo:" + GzGet((*_world), Name, ()) + ":" + _model->GetName();
+    string name = "gazebo::" + GzGet((*_world), Name, ()) + "::" + _model->GetName();
     provides()->setName(name);
     _name.set(name);
 
