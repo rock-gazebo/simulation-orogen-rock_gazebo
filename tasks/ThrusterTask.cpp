@@ -100,7 +100,7 @@ void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model
 {
     string worldName = GzGet((*(model->GetWorld())), Name, ());
 
-    string taskName = "gazebo:" + worldName + ":" + model->GetName() + ":" + pluginName;
+    string taskName = "gazebo::" + worldName + "::" + model->GetName() + "::" + pluginName;
     provides()->setName(taskName);
     _name.set(taskName);
 
