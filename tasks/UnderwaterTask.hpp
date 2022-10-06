@@ -7,6 +7,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/vector3d.pb.h>
+#include <regex>
 
 namespace rock_gazebo{
 

@@ -28,7 +28,7 @@ bool UnderwaterTask::configureHook()
     // Set gazebo topic to advertise
     node = transport::NodePtr(new transport::Node());
     node->Init();
-    fluid_velocityPublisher = node->Advertise<gazebo::msgs::Vector3d>("~/" + topicName);
+    fluid_velocityPublisher = node->Advertise<gazebo::msgs::Vector3d>("/" + topicName);
     gzmsg << "UnderwaterTask: advertising to gazebo topic ~/" + topicName << endl;
     return true;
 }
@@ -37,11 +37,10 @@ void UnderwaterTask::setGazeboModel(std::string const& pluginName, ModelPtr mode
 {
     string worldName = GzGet((*(model->GetWorld())), Name, ());
 
-    string taskName = "gazebo::" + worldName + "::" + model->GetName() + "::" + pluginName;
+    string taskName = std::regex_replace(pluginName, std::regex("__"), "::");
     provides()->setName(taskName);
     _name.set(taskName);
-
-    topicName = model->GetName() + "/fluid_velocity";
+    string topicName = std::regex_replace(pluginName, std::regex("__"), "/") + "/fluid_velocity";
 }
 
 bool UnderwaterTask::startHook()
