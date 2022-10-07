@@ -2,6 +2,7 @@
 
 #include "UnderwaterTask.hpp"
 #include "Gazebo7Shims.hpp"
+#include <regex>
 
 using namespace std;
 using namespace gazebo;
@@ -29,19 +30,21 @@ bool UnderwaterTask::configureHook()
     node = transport::NodePtr(new transport::Node());
     node->Init();
     fluid_velocityPublisher = node->Advertise<gazebo::msgs::Vector3d>("/" + topicName);
-    gzmsg << "UnderwaterTask: advertising to gazebo topic ~/" + topicName << endl;
+    gzmsg << "UnderwaterTask: advertising to gazebo topic /" + topicName << endl;
     return true;
 }
 
 void UnderwaterTask::setGazeboModel(std::string const& pluginName, ModelPtr model)
 {
-    string worldName = GzGet((*(model->GetWorld())), Name, ());
-
-    string taskName = std::regex_replace(pluginName, std::regex("__"), "::");
-    provides()->setName(taskName);
-    _name.set(taskName);
-    string topicName = std::regex_replace(pluginName, std::regex("__"), "/") + "/fluid_velocity";
+    topicName = std::regex_replace(pluginName, std::regex("__"), "/") + "/fluid_velocity";
 }
+
+void UnderwaterTask::setGazeboPluginTaskName( std::string const& pluginTaskName )
+{
+    provides()->setName(pluginTaskName);
+    _name.set(pluginTaskName);
+}
+
 
 bool UnderwaterTask::startHook()
 {

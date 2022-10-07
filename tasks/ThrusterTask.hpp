@@ -7,7 +7,6 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo_thruster/msgs.pb.h>
-#include <regex>
 
 namespace rock_gazebo {
     class ThrusterTask : public ThrusterTaskBase
@@ -28,7 +27,8 @@ namespace rock_gazebo {
         void stopHook();
         void cleanupHook();
 
-        void setGazeboModel( std::string const& pluginName, ModelPtr );
+        void setGazeboModel( std::string const& pluginName, ModelPtr model );
+        void setGazeboPluginTaskName( std::string const& pluginTaskName );
 
     private:
         std::string topicName;
