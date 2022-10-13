@@ -91,6 +91,8 @@ namespace rock_gazebo {
          * either from Stopped or Exception
          */
         void cleanupHook();
+
+        std::string getTopicNameFromPluginName(std::string const& pluginName);
     };
 }
 

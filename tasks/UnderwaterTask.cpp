@@ -2,7 +2,6 @@
 
 #include "UnderwaterTask.hpp"
 #include "Gazebo7Shims.hpp"
-#include <regex>
 
 using namespace std;
 using namespace gazebo;
@@ -36,7 +35,7 @@ bool UnderwaterTask::configureHook()
 
 void UnderwaterTask::setGazeboModel(std::string const& pluginName, ModelPtr model)
 {
-    topicName = std::regex_replace(pluginName, std::regex("__"), "/") + "/fluid_velocity";
+    topicName = getTopicNameFromPluginName(pluginName) + "/fluid_velocity";
 }
 
 void UnderwaterTask::setGazeboPluginTaskName( std::string const& pluginTaskName )

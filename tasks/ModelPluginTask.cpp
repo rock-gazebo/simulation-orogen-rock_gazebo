@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "ModelPluginTask.hpp"
+#include <regex>
 
 using namespace rock_gazebo;
 
@@ -46,4 +47,9 @@ void ModelPluginTask::stopHook()
 void ModelPluginTask::cleanupHook()
 {
     ModelPluginTaskBase::cleanupHook();
+}
+
+std::string ModelPluginTask::getTopicNameFromPluginName( std::string const& pluginName )
+{
+    return std::regex_replace(pluginName, std::regex("__"), "/");
 }

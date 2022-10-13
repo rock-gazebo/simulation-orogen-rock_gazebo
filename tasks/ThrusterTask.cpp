@@ -2,7 +2,6 @@
 
 #include "ThrusterTask.hpp"
 #include "Gazebo7Shims.hpp"
-#include <regex>
 
 using namespace std;
 using namespace gazebo;
@@ -99,7 +98,7 @@ void ThrusterTask::cleanupHook()
 
 void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model )
 {
-    topicName = std::regex_replace(pluginName, std::regex("__"), "/") + "/thrusters";
+    topicName = getTopicNameFromPluginName(pluginName) + "/thrusters";
 }
 
 void ThrusterTask::setGazeboPluginTaskName( std::string const& pluginTaskName )
