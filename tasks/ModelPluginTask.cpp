@@ -53,3 +53,9 @@ std::string ModelPluginTask::getTopicNameFromPluginName( std::string const& plug
 {
     return std::regex_replace(pluginName, std::regex("__"), "/");
 }
+
+void ModelPluginTask::setGazeboPluginTaskName( std::string const& pluginTaskName )
+{
+    provides()->setName(pluginTaskName);
+    _name.set(pluginTaskName);
+}

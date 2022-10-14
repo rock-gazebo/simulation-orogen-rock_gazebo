@@ -101,10 +101,5 @@ void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model
     topicName = getTopicNameFromPluginName(pluginName) + "/thrusters";
 }
 
-void ThrusterTask::setGazeboPluginTaskName( std::string const& pluginTaskName )
-{
-    provides()->setName(pluginTaskName);
-    _name.set(pluginTaskName);
-}
 
 
