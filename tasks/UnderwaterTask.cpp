@@ -35,7 +35,7 @@ bool UnderwaterTask::configureHook()
 
 void UnderwaterTask::setGazeboModel(std::string const& pluginName, ModelPtr model)
 {
-    topicName = getTopicNameFromPluginName(pluginName) + "/fluid_velocity";
+    topicName = getNamespaceFromPluginName(pluginName) + "/fluid_velocity";
 }
 
 bool UnderwaterTask::startHook()

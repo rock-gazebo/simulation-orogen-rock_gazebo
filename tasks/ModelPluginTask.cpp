@@ -49,13 +49,13 @@ void ModelPluginTask::cleanupHook()
     ModelPluginTaskBase::cleanupHook();
 }
 
-std::string ModelPluginTask::getTopicNameFromPluginName( std::string const& pluginName )
+std::string ModelPluginTask::getNamespaceFromPluginName(std::string const& plugin_name)
 {
-    return std::regex_replace(pluginName, std::regex("__"), "/");
+    return std::regex_replace(plugin_name, std::regex("__"), "/");
 }
 
-void ModelPluginTask::setGazeboPluginTaskName( std::string const& pluginTaskName )
+void ModelPluginTask::setGazeboPluginTaskName(std::string const& plugin_task_name)
 {
-    provides()->setName(pluginTaskName);
-    _name.set(pluginTaskName);
+    provides()->setName(plugin_task_name);
+    _name.set(plugin_task_name);
 }

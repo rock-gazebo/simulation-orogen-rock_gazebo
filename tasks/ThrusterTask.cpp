@@ -98,7 +98,7 @@ void ThrusterTask::cleanupHook()
 
 void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model )
 {
-    topicName = getTopicNameFromPluginName(pluginName) + "/thrusters";
+    topicName = getNamespaceFromPluginName(pluginName) + "/thrusters";
 }
 
 

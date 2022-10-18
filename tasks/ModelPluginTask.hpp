@@ -94,14 +94,14 @@ namespace rock_gazebo {
 
         /** Get a topic name from the given plugin name
          *
-         * This method substitues '__' in the plugin name for the '/' in the topic name
+         * This method replaces '__' for '/' in 'pluginName'
          */
-        std::string getTopicNameFromPluginName(std::string const& pluginName);
+        std::string getNamespaceFromPluginName(std::string const& plugin_name);
 
         /** 
          * This method set the gazebo plugin task name
          */
-        void setGazeboPluginTaskName( std::string const& pluginTaskName );
+        void setGazeboPluginTaskName(std::string const& plugin_task_name);
     };
 }
 
