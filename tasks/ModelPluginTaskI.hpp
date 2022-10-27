@@ -16,6 +16,10 @@ namespace rock_gazebo {
             std::string const& pluginName,
             gazebo::physics::ModelPtr model
         ) = 0;
+
+        virtual void setGazeboPluginTaskName(
+            std::string const& pluginTaskName
+        ) = 0;
     };
 }
 

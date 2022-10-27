@@ -36,7 +36,6 @@ namespace rock_gazebo{
 
     public:
         void setGazeboModel( std::string const& pluginName, ModelPtr model );
-
         /** TaskContext constructor for UnderwaterTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.

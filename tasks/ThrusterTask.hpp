@@ -27,7 +27,7 @@ namespace rock_gazebo {
         void stopHook();
         void cleanupHook();
 
-        void setGazeboModel( std::string const& pluginName, ModelPtr );
+        void setGazeboModel( std::string const& pluginName, ModelPtr model );
 
     private:
         std::string topicName;

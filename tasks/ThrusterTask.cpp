@@ -29,8 +29,8 @@ bool ThrusterTask::configureHook()
     // Set gazebo topic to advertise
     node = transport::NodePtr( new transport::Node() );
     node->Init();
-    thrusterPublisher = node->Advertise<ThrustersMSG>("~/" + topicName);
-    gzmsg << "ThrusterTask: advertising to gazebo topic ~/" + topicName << endl;
+    thrusterPublisher = node->Advertise<ThrustersMSG>("/" + topicName);
+    gzmsg << "ThrusterTask: advertising to gazebo topic /" + topicName << endl;
     return true;
 }
 
@@ -98,13 +98,8 @@ void ThrusterTask::cleanupHook()
 
 void ThrusterTask::setGazeboModel( std::string const& pluginName, ModelPtr model )
 {
-    string worldName = GzGet((*(model->GetWorld())), Name, ());
-
-    string taskName = "gazebo::" + worldName + "::" + model->GetName() + "::" + pluginName;
-    provides()->setName(taskName);
-    _name.set(taskName);
-
-    topicName = model->GetName() + "/thrusters";
+    topicName = getNamespaceFromPluginName(pluginName) + "/thrusters";
 }
+
 
 
