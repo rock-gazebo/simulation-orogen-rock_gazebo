@@ -127,6 +127,8 @@ end
 task_context 'LaserScanTask', subclasses: 'SensorTask' do
     # Laser line output port
     output_port 'laser_scan_samples', '/base/samples/LaserScan'
+    # Depth map output port
+    output_port 'depth_map_samples', '/base/samples/DepthMap'
 end
 
 task_context 'CameraTask', subclasses: 'SensorTask' do
