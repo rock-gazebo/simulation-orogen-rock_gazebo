@@ -26,6 +26,8 @@ namespace rock_gazebo {
         void cleanupHook();
 
     private:
+        void outputLaserScan(ConstLaserScanStampedPtr& laserScanMSG);
+        void outputDepthMap(ConstLaserScanStampedPtr& laserScanMSG);
         void readInput(ConstLaserScanStampedPtr& laserScanMSG);
         bool hasNewSample;
         base::samples::LaserScan scan;
