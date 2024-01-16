@@ -4,13 +4,13 @@
 #define ROCK_GAZEBO_LASERSCANTASK_TASK_HPP
 
 #include "rock_gazebo/LaserScanTaskBase.hpp"
+#include <base/samples/DepthMap.hpp>
+#include <gazebo/msgs/laserscan_stamped.pb.h>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/transport/transport.hh>
-#include <gazebo/msgs/laserscan_stamped.pb.h>
 
-namespace rock_gazebo{
-    class LaserScanTask : public LaserScanTaskBase
-    {
+namespace rock_gazebo {
+    class LaserScanTask : public LaserScanTaskBase {
         friend class LaserScanTaskBase;
 
     public:
@@ -26,9 +26,12 @@ namespace rock_gazebo{
         void cleanupHook();
 
     private:
-        void readInput( ConstLaserScanStampedPtr &laserScanMSG );
+        void outputLaserScan(ConstLaserScanStampedPtr& laserScanMSG);
+        void outputDepthMap(ConstLaserScanStampedPtr& laserScanMSG);
+        void readInput(ConstLaserScanStampedPtr& laserScanMSG);
         bool hasNewSample;
         base::samples::LaserScan scan;
+        base::samples::DepthMap m_depth_map;
     };
 }
 
