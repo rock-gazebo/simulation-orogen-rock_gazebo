@@ -122,8 +122,8 @@ void LaserScanTask::outputDepthMap(ConstLaserScanStampedPtr& laserScanMSG)
     unsigned int scan_size = laserScanMSG->scan().ranges_size();
     m_depth_map.vertical_size = laserScanMSG->scan().vertical_count();
     m_depth_map.horizontal_size = laserScanMSG->scan().count();
-    m_depth_map.vertical_interval[0] = laserScanMSG->scan().vertical_angle_max();
-    m_depth_map.vertical_interval[1] = laserScanMSG->scan().vertical_angle_min();
+    m_depth_map.vertical_interval[0] = -laserScanMSG->scan().vertical_angle_min();
+    m_depth_map.vertical_interval[1] = -laserScanMSG->scan().vertical_angle_max();
     m_depth_map.horizontal_interval[0] = laserScanMSG->scan().angle_min();
     m_depth_map.horizontal_interval[1] = laserScanMSG->scan().angle_max();
     m_depth_map.distances.resize(scan_size);
