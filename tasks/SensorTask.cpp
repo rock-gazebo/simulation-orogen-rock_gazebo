@@ -86,24 +86,22 @@ void SensorTask::cleanupHook()
 }
 void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
 {
-    BaseTask::setGazeboWorld( model->GetWorld() );
+    BaseTask::setGazeboWorld(model->GetWorld());
 
     sdf::ElementPtr sdfLink = sdfSensor->GetParent();
     this->gazeboModel = model;
-    this->sdfSensor   = sdfSensor;
-    this->gazeboLink  = model->GetChildLink(sdfLink->Get<string>("name"));
+    this->sdfSensor = sdfSensor;
+    this->gazeboLink = model->GetChildLink(sdfLink->Get<string>("name"));
 
-    sensorFullName =
-        getWorldName() + "::" +
-        model->GetScopedName() + "::" +
-        sdfLink->Get<string>("name") + "::" +
-        sdfSensor->Get<string>("name");
-    baseTopicName = "~/" + model->GetName() + "/" + sdfLink->Get<string>("name") + "/" + sdfSensor->Get<string>("name");
+    sensorFullName = gazeboLink->GetScopedName(true) +
+                     "::" + sdfSensor->Get<string>("name");
+    baseTopicName =
+        "~/" + gazeboLink->GetScopedName() + "/" + sdfSensor->Get<string>("name");
     std::regex gz_namespace_separator("::");
     baseTopicName = std::regex_replace(baseTopicName, gz_namespace_separator, "/");
 
-    string taskName = "gazebo::" + getWorldName() + "::" + model->GetName() + "::" + sdfSensor->Get<string>("name");
-    if(!provides())
+    string taskName = "gazebo::" + sensorFullName;
+    if (!provides())
         throw std::runtime_error("SensorTask::provides returned NULL");
     provides()->setName(taskName);
     _name.set(taskName);
