@@ -3,16 +3,13 @@
 #ifndef ROCK_GAZEBO_IMUTASK_TASK_HPP
 #define ROCK_GAZEBO_IMUTASK_TASK_HPP
 
-#include "rock_gazebo/ImuTaskBase.hpp"
-
-#include <list>
-#include <utility>
+#include "gz_rock/ImuTaskBase.hpp"
 
 #include <base/samples/IMUSensors.hpp>
 #include <base/samples/RigidBodyState.hpp>
-#include <gazebo/msgs/imu.pb.h>
+#include <gz/msgs/imu.pb.h>
 
-namespace rock_gazebo{
+namespace gz_rock{
 
     /*! \class ImuTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
@@ -23,7 +20,7 @@ namespace rock_gazebo{
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','rock_gazebo::ImuTask')
+         task('custom_task_name','gz_rock::ImuTask')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix argument.
@@ -32,15 +29,14 @@ namespace rock_gazebo{
     {
 	friend class ImuTaskBase;
     protected:
-
-
+        typedef gz::sim::Entity ModelPtr;
 
     public:
         /** TaskContext constructor for ImuTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        ImuTask(std::string const& name = "rock_gazebo::ImuTask");
+        ImuTask(std::string const& name = "gz_rock::ImuTask");
 
         /** TaskContext constructor for ImuTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
@@ -111,12 +107,12 @@ namespace rock_gazebo{
          */
         void cleanupHook();
 
-        void readInput(ConstIMUPtr &imuMsg);
+        void readInput(gz::msgs::ConstIMUSharedPtr &imuMsg);
 
     protected:
         void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
     private:
-        ignition::math::Quaterniond initialOrientation;
+        gz::math::Quaterniond initialOrientation;
         base::samples::RigidBodyState orientation;
         base::samples::IMUSensors imuSensors;
     };

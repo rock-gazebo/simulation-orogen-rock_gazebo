@@ -7,7 +7,7 @@
 #include <regex>
 #include <base-logging/Logging.hpp>
 
-using namespace rock_gazebo;
+using namespace gz_rock;
 using namespace std;
 
 SensorTask::SensorTask(std::string const& name)

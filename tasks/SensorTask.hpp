@@ -3,11 +3,13 @@
 #ifndef ROCK_GAZEBO_SENSORTASK_TASK_HPP
 #define ROCK_GAZEBO_SENSORTASK_TASK_HPP
 
-#include "rock_gazebo/SensorTaskBase.hpp"
-#include <gazebo/sensors/sensors.hh>
-#include <gazebo/transport/Node.hh>
+#include <string>
 
-namespace rock_gazebo{
+#include "gz_rock/SensorTaskBase.hpp"
+#include <gz/sim/System.hh>
+#include <gz/transport/Node.hh>
+
+namespace gz_rock{
 
     /*! \class SensorTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
@@ -18,7 +20,7 @@ namespace rock_gazebo{
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','rock_gazebo::SensorTask')
+         task('custom_task_name','gz_rock::SensorTask')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix argument.
@@ -27,14 +29,14 @@ namespace rock_gazebo{
     {
 	friend class SensorTaskBase;
     protected:
-        gazebo::sensors::SensorPtr mSensor;
+        gz::sim::Entity mSensor;
 
     public:
         /** TaskContext constructor for SensorTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        SensorTask(std::string const& name = "rock_gazebo::SensorTask");
+        SensorTask(std::string const& name = "gz_rock::SensorTask");
 
         /** TaskContext constructor for SensorTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
@@ -105,9 +107,13 @@ namespace rock_gazebo{
          */
         void cleanupHook();
 
-        typedef gazebo::physics::ModelPtr ModelPtr;
-        typedef gazebo::physics::LinkPtr LinkPtr;
-        virtual void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
+        virtual void setGazebo(
+            std::string const& pluginName,
+            gz::sim::Entity const& entity,
+            std::shared_ptr<const sdf::Element> const& sdf,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::EventManager& event_manager
+        );
 
     protected:
         template<typename M, typename T>
@@ -117,11 +123,11 @@ namespace rock_gazebo{
             gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName << std::endl;
         }
 
-        ModelPtr gazeboModel;
-        LinkPtr gazeboLink;
+        gz::sim::Entity gazeboModel;
+        gz::sim::Entity gazeboLink;
         sdf::ElementPtr sdfSensor;
-        gazebo::transport::SubscriberPtr subscriber;
-        gazebo::transport::NodePtr node;
+        std::shared_ptr<gz::transport::Node::Subscriber> subscriber;
+        std::shared_ptr<gz::transport::Node> node;
         std::mutex readMutex;
         std::string sensorFullName;
         std::string baseTopicName;

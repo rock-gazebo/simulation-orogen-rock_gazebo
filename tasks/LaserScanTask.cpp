@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace gazebo;
-using namespace rock_gazebo;
+using namespace gz_rock;
 using namespace base;
 using namespace samples;
 
@@ -74,7 +74,7 @@ void LaserScanTask::cleanupHook()
     LaserScanTaskBase::cleanupHook();
 }
 
-void LaserScanTask::readInput(ConstLaserScanStampedPtr& laserScanMSG)
+void LaserScanTask::readInput(ConstLaserScanPtr& laserScanMSG)
 {
     if (state() != RUNNING) {
         return;
@@ -91,7 +91,7 @@ void LaserScanTask::readInput(ConstLaserScanStampedPtr& laserScanMSG)
     hasNewSample = true;
 }
 
-void LaserScanTask::outputLaserScan(ConstLaserScanStampedPtr& laserScanMSG)
+void LaserScanTask::outputLaserScan(ConstLaserScanPtr& laserScanMSG)
 {
     unsigned int scan_size = laserScanMSG->scan().ranges_size();
     double range_min = laserScanMSG->scan().range_min();
@@ -117,7 +117,7 @@ void LaserScanTask::outputLaserScan(ConstLaserScanStampedPtr& laserScanMSG)
     _laser_scan_samples.write(scan);
 }
 
-void LaserScanTask::outputDepthMap(ConstLaserScanStampedPtr& laserScanMSG)
+void LaserScanTask::outputDepthMap(ConstLaserScanPtr& laserScanMSG)
 {
     unsigned int scan_size = laserScanMSG->scan().ranges_size();
     m_depth_map.vertical_size = laserScanMSG->scan().vertical_count();

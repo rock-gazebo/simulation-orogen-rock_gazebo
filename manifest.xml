@@ -11,7 +11,7 @@
   <depend package="base/cmake" />
   <depend package="base/logging" />
   <depend package="base/orogen/types" />
-  <depend package="simulation/gazebo" />
-  <depend package="simulation/gazebo_thruster" />
+
+  <depend package="simulation/gz" />
   <depend package="drivers/orogen/gps_base" />
 </package>

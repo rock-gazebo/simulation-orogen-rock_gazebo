@@ -7,28 +7,25 @@
 #ifndef ROCK_GAZEBO_MODELTASK_TASK_HPP
 #define ROCK_GAZEBO_MODELTASK_TASK_HPP
 
-#include "rock_gazebo/ModelTaskBase.hpp"
+#include "gz_rock/ModelTaskBase.hpp"
 #include <base/commands/Joints.hpp>
-#include <gazebo/physics/physics.hh>
+#include <gz/sim/System.hh>
 
-namespace rock_gazebo {
+namespace gz_rock {
     class ModelTask : public ModelTaskBase
     {
         public:
-            typedef gazebo::physics::Joint_V Joint_V;
-            typedef gazebo::physics::Link_V Link_V;
-            typedef gazebo::physics::ModelPtr ModelPtr;
-            typedef gazebo::physics::JointPtr JointPtr;
-            typedef gazebo::physics::LinkPtr LinkPtr;
+            typedef std::vector<gz::sim::Entity> Joint_V;
+            typedef std::vector<gz::sim::Entity> Link_V;
 
         friend class ModelTaskBase;
         private:
-            ModelPtr model;
-            sdf::ElementPtr sdf;
+            gz::sim::Entity m_model;
+            sdf::ElementPtr m_sdf;
 
-            Joint_V gazebo_joints;
+            Joint_V m_gazebo_joints;
 
-            base::samples::Joints joints_in;
+            base::samples::Joints m_joints_in;
             void setupJoints();
 
             typedef base::samples::Wrench Wrench;
@@ -40,8 +37,8 @@ namespace rock_gazebo {
 
             struct InternalLinkExport : public LinkExport
             {
-                LinkPtr source_link_ptr;
-                LinkPtr target_link_ptr;
+                gz::sim::Entity source_link_ptr;
+                gz::sim::Entity target_link_ptr;
                 std::string rba_port_name;
                 std::string wrench_port_name;
                 WrenchInPort* wrench_port;
@@ -76,7 +73,7 @@ namespace rock_gazebo {
                 bool permanent;
                 base::Time port_period;
                 bool ignore_joint_names;
-                std::vector<JointPtr> gazebo_joints;
+                std::vector<gz::sim::Entity> gazebo_joints;
                 std::vector<std::string> expected_names;
 
                 base::samples::Joints joints_in;
@@ -94,7 +91,7 @@ namespace rock_gazebo {
                 {
                 }
 
-                void addJoint(JointPtr joint, std::string name);
+                void addJoint(gz::sim::Entity joint, std::string name);
             };
 
             typedef std::vector<InternalJointExport> JointExportSetup;
@@ -122,7 +119,7 @@ namespace rock_gazebo {
         protected:
 
         public:
-            void setGazeboModel(WorldPtr, ModelPtr);
+            void setGazeboModel(gz::sim::Entity, gz::sim::Entity);
 
             bool startHook();
             void updateHook();

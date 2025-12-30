@@ -3,13 +3,13 @@
 #ifndef ROCK_GAZEBO_CAMERATASK_TASK_HPP
 #define ROCK_GAZEBO_CAMERATASK_TASK_HPP
 
-#include <gazebo/physics/physics.hh>
-#include <gazebo/transport/transport.hh>
-#include <gazebo/msgs/camerasensor.pb.h>
+#include <gz/sim/System.hh>
+#include <gz/transport.hh>
+#include <gz/msgs/image.pb.h>
 
-#include "rock_gazebo/CameraTaskBase.hpp"
+#include "gz_rock/CameraTaskBase.hpp"
 
-namespace rock_gazebo{
+namespace gz_rock{
 
     class CameraTask : public CameraTaskBase
     {
@@ -22,7 +22,7 @@ namespace rock_gazebo{
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        CameraTask(std::string const& name = "rock_gazebo::CameraTask");
+        CameraTask(std::string const& name = "gz_rock::CameraTask");
 
         /** TaskContext constructor for CameraTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
@@ -33,7 +33,7 @@ namespace rock_gazebo{
 
         /** Default deconstructor of CameraTask
          */
-	~CameraTask();
+        ~CameraTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -93,9 +93,8 @@ namespace rock_gazebo{
          */
         void cleanupHook();
 
-
     private:
-        void readInput( ConstImageStampedPtr &imageMsg);
+        void readInput( gz::msgs::ConstImageSharedPtr &imageMsg);
         bool hasNewSample;
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> output_frame;
     };

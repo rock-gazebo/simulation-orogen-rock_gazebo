@@ -6,13 +6,12 @@
 //======================================================================================
 
 #include "ModelTask.hpp"
-#include "Gazebo7Shims.hpp"
 #include <gazebo/common/Exception.hh>
 #include <base-logging/Logging.hpp>
 
 using namespace std;
 using namespace gazebo;
-using namespace rock_gazebo;
+using namespace gz_rock;
 using ignition::math::Vector3d;
 using ignition::math::Pose3d;
 using ignition::math::Quaterniond;
@@ -38,7 +37,7 @@ ModelTask::~ModelTask()
 
 void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
 {
-    string name = "gazebo::" + GzGet((*_world), Name, ()) + "::" + _model->GetName();
+    string name = "gazebo::" + _world->GetName() + "::" + _model->GetName();
     provides()->setName(name);
     _name.set(name);
 

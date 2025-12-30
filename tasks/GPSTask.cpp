@@ -4,7 +4,7 @@
 #include <gazebo/transport/transport.hh>
 
 using namespace std;
-using namespace rock_gazebo;
+using namespace gz_rock;
 using gazebo::common::SphericalCoordinates;
 
 GPSTask::GPSTask(std::string const& name)

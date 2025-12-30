@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace gazebo;
-using namespace rock_gazebo;
+using namespace gz_rock;
 
 CameraTask::CameraTask(std::string const& name)
     : CameraTaskBase(name),
@@ -69,7 +69,7 @@ void CameraTask::cleanupHook()
     CameraTaskBase::cleanupHook();
 }
 
-void CameraTask::readInput( ConstImageStampedPtr & imageMsg)
+void CameraTask::readInput( ConstImagePtr & imageMsg)
 {
     if (state() != RUNNING) {
         return;
@@ -91,7 +91,7 @@ void CameraTask::readInput( ConstImageStampedPtr & imageMsg)
     base::samples::frame::Frame *pframe = output_frame.write_access();
     pframe->init(image.width(),image.height(),8,base::samples::frame::MODE_RGB);
     if(size != pframe->image.size())
-        throw std::runtime_error("rock_gazebo::CameraTask image size mismatch");
+        throw std::runtime_error("gz_rock::CameraTask image size mismatch");
     memcpy((void*)&(pframe->image.front()),(void*)data,size);
     pframe->time = getCurrentTime();
     pframe->frame_status = base::samples::frame::STATUS_VALID;

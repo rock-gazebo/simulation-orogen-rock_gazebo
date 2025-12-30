@@ -1,10 +1,10 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "WorldTask.hpp"
-#include "Gazebo7Shims.hpp"
+#include <gz/sim/components/World.hh>
 
-using namespace rock_gazebo;
-using namespace gazebo;
+using namespace gz_rock;
+using namespace gz::sim;
 
 WorldTask::WorldTask(std::string const& name)
     : WorldTaskBase(name)
@@ -21,16 +21,22 @@ WorldTask::~WorldTask()
 }
 
 
-void WorldTask::setGazeboWorld(physics::WorldPtr _world)
-{
-    provides()->setName("gazebo::" + GzGet((*_world), Name, ()));
-    world = _world;
+void WorldTask::setGazebo(
+    std::string const& pluginName,
+    Entity const& entity,
+    std::shared_ptr<const sdf::Element> const& sdf,
+    EntityComponentManager& ecm,
+    EventManager& event_manager
+) {
+    m_world = entity;
+
+    provides()->setName("gazebo::" + getWorldName());
     _name.set(getWorldName());
 }
 
 std::string WorldTask::getWorldName() const
 {
-    return GzGet((*world), Name, ());
+    return components::World(m_world).GetName();
 }
 
 /// The following lines are template definitions for the various state machine
@@ -51,7 +57,7 @@ bool WorldTask::startHook()
 }
 void WorldTask::updateHook()
 {
-    common::Time sim_time = GzGet((*world), SimTime, ());
+    common::Time sim_time = components::World(m_world).GetSimTime();
     _time.write(
             base::Time::fromSeconds(sim_time.sec) +
             base::Time::fromMicroseconds(sim_time.nsec / 1000));

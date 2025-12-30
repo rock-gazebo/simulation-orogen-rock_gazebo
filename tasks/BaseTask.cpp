@@ -1,9 +1,14 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "BaseTask.hpp"
-#include "Gazebo7Shims.hpp"
 
-using namespace rock_gazebo;
+#include <gz/sim/System.hh>
+#include <gz/sim/World.hh>
+
+using namespace gz_rock;
+using namespace gz;
+using namespace gz::sim;
+using namespace gz::systems;
 
 BaseTask::BaseTask(std::string const& name)
     : BaseTaskBase(name)
@@ -19,24 +24,28 @@ BaseTask::~BaseTask()
 {
 }
 
-void BaseTask::setGazeboWorld(WorldPtr _world)
+void BaseTask::setGazeboWorld(EntityComponentManager & ecm, Entity world)
 {
-    world = _world;
+    m_world = world;
+    m_ecm.reset(&ecm);
 }
 
 std::string BaseTask::getWorldName() const
 {
-    return GzGet((*world), Name, ());
+    return *World(m_world).Name(*m_ecm);
+}
+
+void BaseTask::setSimTime(base::Time const& sim_time)
+{
+    m_sim_time = sim_time;
 }
 
 base::Time BaseTask::getSimTime() const
 {
-    gazebo::common::Time sim_time = GzGet((*world), SimTime, ());
-    return base::Time::fromSeconds(sim_time.sec) +
-        base::Time::fromMicroseconds(sim_time.nsec / 1000);
+    return m_sim_time;
 }
 
-base::Time BaseTask::getCurrentTime(gazebo::msgs::Time sim_timestamp) const
+base::Time BaseTask::getCurrentTime(gz::msgs::Time const& sim_timestamp) const
 {
     return getCurrentTime(base::Time::fromSeconds(sim_timestamp.sec())+
             base::Time::fromMicroseconds(sim_timestamp.nsec() / 1000));

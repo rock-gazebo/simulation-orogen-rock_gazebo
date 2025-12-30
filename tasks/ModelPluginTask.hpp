@@ -3,10 +3,10 @@
 #ifndef ROCK_GAZEBO_MODELPLUGINTASK_TASK_HPP
 #define ROCK_GAZEBO_MODELPLUGINTASK_TASK_HPP
 
-#include "rock_gazebo/ModelPluginTaskBase.hpp"
-#include "rock_gazebo/ModelPluginTaskI.hpp"
+#include "gz_rock/ModelPluginTaskBase.hpp"
+#include "gz_rock/ModelPluginTaskI.hpp"
 
-namespace rock_gazebo {
+namespace gz_rock {
     /*! \class ModelPluginTask
      * \brief this task has no documentation, write one as a commentblock before the task_context statement in the orogen file
      */
@@ -28,7 +28,7 @@ namespace rock_gazebo {
          *                      This is deprecated. It should always be the
          *                      configure state.
          */
-        ModelPluginTask(std::string const& name = "rock_gazebo::ModelPluginTask");
+        ModelPluginTask(std::string const& name = "gz_rock::ModelPluginTask");
 
         ~ModelPluginTask();
 

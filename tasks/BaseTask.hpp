@@ -3,40 +3,47 @@
 #ifndef ROCK_GAZEBO_BASETASK_TASK_HPP
 #define ROCK_GAZEBO_BASETASK_TASK_HPP
 
-#include "rock_gazebo/BaseTaskBase.hpp"
-#include <gazebo/physics/physics.hh>
+#include "gz_rock/BaseTaskBase.hpp"
+#include <gz/sim/System.hh>
+#include <gz/msgs/time.pb.h>
 #include <base/Time.hpp>
 
-namespace rock_gazebo {
+namespace gz_rock {
 
-    /*! \class BaseTask 
+    /*! \class BaseTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
      * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * 
+     *
      * \details
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','rock_gazebo::BaseTask')
+         task('custom_task_name','gz_rock::BaseTask')
      end
      \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument. 
+     *  It can be dynamically adapted when the deployment is called with a prefix argument.
      */
     class BaseTask : public BaseTaskBase
     {
 	friend class BaseTaskBase;
 
     protected:
-        typedef gazebo::physics::WorldPtr WorldPtr;
-        WorldPtr world;
+        std::shared_ptr<gz::sim::EntityComponentManager> m_ecm;
+        gz::sim::Entity m_world;
+        base::Time m_sim_time;
 
     public:
         /** Returns the name of the underlying world */
         std::string getWorldName() const;
 
+        /** Hook for the gz_rock system plugin to announce the simulation time
+         */
+        void setSimTime(base::Time const& time);
+
         /** Returns the simulated time */
         base::Time getSimTime() const;
+
         /** Returns either the simulated or wall-clock time, depending on the
          * value of the use_sim_time property
          */
@@ -44,7 +51,7 @@ namespace rock_gazebo {
 
         /** @overload
          */
-        base::Time getCurrentTime(gazebo::msgs::Time sim_timestamp) const;
+        base::Time getCurrentTime(gz::msgs::Time const& sim_timestamp) const;
 
         /** Returns either the simulated timestamp, or a time-shifted timestamp
          * that matches the wall-clock time, depending on the value of the
@@ -52,22 +59,22 @@ namespace rock_gazebo {
          */
         base::Time getCurrentTime(base::Time sim_timestamp) const;
 
-        void setGazeboWorld(WorldPtr);
+        void setGazeboWorld(gz::sim::EntityComponentManager & ecm, gz::sim::Entity world);
 
         /** TaskContext constructor for BaseTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          */
-        BaseTask(std::string const& name = "rock_gazebo::BaseTask");
+        BaseTask(std::string const& name = "gz_rock::BaseTask");
 
-        /** TaskContext constructor for BaseTask 
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices. 
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task. 
+        /** TaskContext constructor for BaseTask
+         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
+         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
          */
         BaseTask(std::string const& name, RTT::ExecutionEngine* engine);
 
         /** Default deconstructor of BaseTask
          */
-	~BaseTask();
+        ~BaseTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -98,7 +105,7 @@ namespace rock_gazebo {
          *
          * The error(), exception() and fatal() calls, when called in this hook,
          * allow to get into the associated RunTimeError, Exception and
-         * FatalError states. 
+         * FatalError states.
          *
          * In the first case, updateHook() is still called, and recover() allows
          * you to go back into the Running state.  In the second case, the

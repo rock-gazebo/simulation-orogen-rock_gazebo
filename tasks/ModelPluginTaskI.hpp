@@ -1,20 +1,23 @@
 #ifndef ROCK_GAZEBO_MODEL_PLUGIN_TASK_I_HPP
 #define ROCK_GAZEBO_MODEL_PLUGIN_TASK_I_HPP
 
-#include <gazebo/physics/PhysicsTypes.hh>
+#include <gz/sim/System.hh>
 #include <string>
 
-namespace rock_gazebo {
+namespace gz_rock {
     /**
-     * Abstract base class used by the rock_gazebo plugin to instanciate tasks
+     * Abstract base class used by the gz_rock plugin to instanciate tasks
      * associated with model plugins
      */
     struct ModelPluginTaskI {
         virtual ~ModelPluginTaskI() {}
 
-        virtual void setGazeboModel(
+        virtual void setGazebo(
             std::string const& pluginName,
-            gazebo::physics::ModelPtr model
+            gz::sim::Entity const& entity,
+            std::shared_ptr<const sdf::Element> const& sdf,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::EventManager& event_manager
         ) = 0;
 
         virtual void setGazeboPluginTaskName(

@@ -3,11 +3,10 @@
 #include "ImuTask.hpp"
 #include <gazebo/sensors/ImuSensor.hh>
 #include <gazebo/sensors/SensorsIface.hh>
-#include "Gazebo7Shims.hpp"
 
 using namespace std;
 using namespace gazebo;
-using namespace rock_gazebo;
+using namespace gz_rock;
 
 typedef ignition::math::Pose3d IgnPose3d;
 typedef ignition::math::Vector3d IgnVector3d;

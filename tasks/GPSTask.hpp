@@ -3,14 +3,14 @@
 #ifndef ROCK_GAZEBO_GPSTASK_TASK_HPP
 #define ROCK_GAZEBO_GPSTASK_TASK_HPP
 
-#include "rock_gazebo/GPSTaskBase.hpp"
+#include "gz_rock/GPSTaskBase.hpp"
 #include <gps_base/BaseTypes.hpp>
 #include <gps_base/UTMConverter.hpp>
 
-#include <gazebo/msgs/gps.pb.h>
-#include <gazebo/common/SphericalCoordinates.hh>
+#include <gz/msgs/gps.pb.h>
+#include <gz/math/SphericalCoordinates.hh>
 
-namespace rock_gazebo{
+namespace gz_rock{
 
     /*! \class GPSTask
      * \brief The task context provides and requires services. It uses an
@@ -24,7 +24,7 @@ namespace rock_gazebo{
      * The name of a TaskContext is primarily defined via:
      * \verbatim
      * deployment 'deployment_name'
-     *     task('custom_task_name','rock_gazebo::GPSTask')
+     *     task('custom_task_name','gz_rock::GPSTask')
      * end
      * \endverbatim
      * It can be dynamically adapted when the deployment is called with a
@@ -33,6 +33,7 @@ namespace rock_gazebo{
     class GPSTask : public GPSTaskBase
     {
         friend class GPSTaskBase;
+        typedef gz::sim::Entity ModelPtr;
 
     private:
         gps_base::UTMConverter utm_converter;
@@ -42,10 +43,10 @@ namespace rock_gazebo{
 
         bool hasNewSample;
         gps_base::Solution solution;
-        gazebo::common::SphericalCoordinates gazeboSpherical;
+        gz::math::SphericalCoordinates gazeboSpherical;
 
     protected:
-        void readInput(ConstGPSPtr &msg);
+        void readInput(gz::msgs::ConstGPSSharedPtr &msg);
 
     public:
         /** TaskContext constructor for GPSTask
@@ -54,7 +55,7 @@ namespace rock_gazebo{
          * \param initial_state The initial TaskState of the TaskContext.
          *      Default is Stopped state.
          */
-        GPSTask(std::string const& name = "rock_gazebo::GPSTask");
+        GPSTask(std::string const& name = "gz_rock::GPSTask");
 
         /** TaskContext constructor for GPSTask
          * \param name Name of the task. This name needs to be unique to make

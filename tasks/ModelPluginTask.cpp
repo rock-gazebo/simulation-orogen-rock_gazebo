@@ -3,7 +3,7 @@
 #include "ModelPluginTask.hpp"
 #include <regex>
 
-using namespace rock_gazebo;
+using namespace gz_rock;
 
 ModelPluginTask::ModelPluginTask(std::string const& name)
     : ModelPluginTaskBase(name)
