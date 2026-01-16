@@ -9,12 +9,6 @@
 
 namespace gz_rock
 {
-    enum IMUReference {
-        REFERENCE_INITIAL_POSE,
-        REFERENCE_HORIZONTAL_PLANE,
-        REFERENCE_ABSOLUTE
-    };
-
     struct LinkExport {
         // The port name
         std::string port_name;

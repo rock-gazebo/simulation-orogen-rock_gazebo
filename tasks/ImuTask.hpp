@@ -107,12 +107,19 @@ namespace gz_rock{
          */
         void cleanupHook();
 
-        void readInput(gz::msgs::ConstIMUSharedPtr &imuMsg);
+        void readInput(gz::msgs::IMU const& imuMsg);
 
     protected:
-        void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
+        void setGazebo(
+            std::string const& pluginName,
+            gz::sim::Entity const& sensor,
+            std::shared_ptr<const sdf::Element> const& sdf,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::EventManager& event_manager
+        ) override;
+
     private:
-        gz::math::Quaterniond initialOrientation;
+        gz::math::Quaterniond m_initial_orientation;
         base::samples::RigidBodyState orientation;
         base::samples::IMUSensors imuSensors;
     };

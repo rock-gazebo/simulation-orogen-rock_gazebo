@@ -1,16 +1,15 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "ImuTask.hpp"
-#include <gazebo/sensors/ImuSensor.hh>
-#include <gazebo/sensors/SensorsIface.hh>
+
+#include <gz/sim/Link.hh>
 
 using namespace std;
-using namespace gazebo;
 using namespace gz_rock;
 
-typedef ignition::math::Pose3d IgnPose3d;
-typedef ignition::math::Vector3d IgnVector3d;
-typedef ignition::math::Quaterniond IgnQuaterniond;
+typedef gz::math::Pose3d IgnPose3d;
+typedef gz::math::Vector3d IgnVector3d;
+typedef gz::math::Quaterniond IgnQuaterniond;
 
 ImuTask::ImuTask(std::string const& name)
     : ImuTaskBase(name)
@@ -30,12 +29,18 @@ ImuTask::~ImuTask()
 {
 }
 
-void ImuTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
-{
-    ImuTaskBase::setGazeboModel(model, sdfSensor);
-    initialOrientation = GzGetIgn((*(gazeboLink)), WorldPose, ()).Rot();
-}
+void ImuTask::setGazebo(
+    std::string const& pluginName,
+    gz::sim::Entity const& sensor,
+    std::shared_ptr<const sdf::Element> const& sdf,
+    gz::sim::EntityComponentManager& ecm,
+    gz::sim::EventManager& event_manager
+) {
+    ImuTaskBase::setGazebo(pluginName, sensor, sdf, ecm, event_manager);
 
+    m_initial_orientation = gz::sim::Link(m_gazebo_link).WorldPose(ecm)->Rot();
+
+}
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See ImuTask.hpp for more detailed
@@ -52,22 +57,7 @@ bool ImuTask::configureHook()
     orientation.cov_orientation = _cov_orientation.value();
     orientation.cov_angular_velocity = _cov_angular_velocity.value();
 
-    gazebo::sensors::SensorPtr sensor = gazebo::sensors::get_sensor(sensorFullName);
-    gazebo::sensors::ImuSensor* imu =
-        dynamic_cast<gazebo::sensors::ImuSensor*>(sensor.get());
-
-#if GAZEBO_MAJOR_VERSION >= 8
-    if (_reference.get() == REFERENCE_HORIZONTAL_PLANE) {
-        IgnVector3d euler = initialOrientation.Euler();
-        IgnQuaterniond q  = IgnQuaterniond::EulerToQuaternion(0, 0, euler.Z());
-        imu->SetWorldToReferenceOrientation(q);
-    }
-    else if (_reference.get() == REFERENCE_ABSOLUTE) {
-        imu->SetWorldToReferenceOrientation(IgnQuaterniond::Identity);
-    }
-#endif
-
-    topicSubscribe(&ImuTask::readInput, baseTopicName + "/imu");
+    topicSubscribe(&ImuTask::readInput, m_base_topic_name + "/imu");
     return true;
 }
 
@@ -95,16 +85,16 @@ void ImuTask::cleanupHook()
     ImuTaskBase::cleanupHook();
 }
 
-void ImuTask::readInput(ConstIMUPtr & imuMsg) {
+void ImuTask::readInput(gz::msgs::IMU const& imuMsg) {
     if (state() != RUNNING) {
         return;
     }
 
-    const gazebo::msgs::Quaternion &quat = imuMsg->orientation();
-    const gazebo::msgs::Vector3d& avel = imuMsg->angular_velocity();
-    const gazebo::msgs::Vector3d& linacc =  imuMsg->linear_acceleration();
+    const gz::msgs::Quaternion &quat = imuMsg.orientation();
+    const gz::msgs::Vector3d& avel = imuMsg.angular_velocity();
+    const gz::msgs::Vector3d& linacc =  imuMsg.linear_acceleration();
 
-    base::Time stamp = getCurrentTime(imuMsg->stamp());
+    base::Time stamp = getCurrentTime(imuMsg.header().stamp());
 
     orientation.time = stamp;
     orientation.orientation =

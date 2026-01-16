@@ -115,26 +115,25 @@ namespace gz_rock {
          */
         void cleanupHook();
 
-        virtual void setGazebo(
-            std::string const& pluginName,
+        virtual void setGazebo(std::string const& pluginName,
             gz::sim::Entity const& sensor,
             std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
-            gz::sim::EventManager& event_manager
-        );
+            gz::sim::EventManager& event_manager);
 
     protected:
-        template<typename M, typename T>
-        void topicSubscribe(void(T::*_fp)(const boost::shared_ptr< M const > &), std::string topicName)
+        template <typename M, typename T>
+        void topicSubscribe(void (T::*_fp)(M const&),
+            std::string topicName)
         {
-            m_subscriber = m_node->Subscribe(topicName, _fp, static_cast<T*>(this));
-            gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName << std::endl;
+            m_node->Subscribe(topicName, _fp, static_cast<T*>(this));
+            gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName
+                  << std::endl;
         }
 
         gz::sim::Entity m_gazebo_model;
         gz::sim::Entity m_gazebo_link;
         sdf::ElementConstPtr m_sdf;
-        std::shared_ptr<gz::transport::Node::Subscriber> m_subscriber;
         std::shared_ptr<gz::transport::Node> m_node;
         std::mutex m_read_mutex;
         std::string m_sensor_full_name;
