@@ -2,13 +2,14 @@
 
 #include "BaseTask.hpp"
 
+#include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/World.hh>
 
 using namespace gz_rock;
 using namespace gz;
 using namespace gz::sim;
-using namespace gz::systems;
+using namespace gz::sim::systems;
 
 BaseTask::BaseTask(std::string const& name)
     : BaseTaskBase(name)
@@ -99,4 +100,18 @@ void BaseTask::stopHook()
 void BaseTask::cleanupHook()
 {
     BaseTaskBase::cleanupHook();
+}
+
+std::optional<gz::sim::Entity> BaseTask::findParentOfType(
+    gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
+    ComponentTypeId const& typeId
+) {
+    auto search = entity;
+    while (!ecm.EntityHasComponentType(search, typeId)) {
+        search = ecm.ParentEntity(search);
+        if (search == gz::sim::kNullEntity) {
+            return std::make_optional<gz::sim::Entity>();
+        }
+    }
+    return std::make_optional(search);
 }

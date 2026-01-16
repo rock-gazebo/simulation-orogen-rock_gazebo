@@ -1,14 +1,21 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "SensorTask.hpp"
-#include <gazebo/transport/transport.hh>
-#include <gazebo/sensors/sensors.hh>
+
+#include <gz/transport.hh>
+#include <gz/sim/System.hh>
+#include <gz/sim/Link.hh>
+#include <gz/sim/Util.hh>
+#include <gz/sim/components/World.hh>
+#include <gz/sim/components/Model.hh>
 #include <sdf/sdf.hh>
-#include <regex>
+
 #include <base-logging/Logging.hpp>
 
 using namespace gz_rock;
 using namespace std;
+
+using namespace gz::sim;
 
 SensorTask::SensorTask(std::string const& name)
     : SensorTaskBase(name)
@@ -36,26 +43,7 @@ bool SensorTask::configureHook()
         return false;
 
     // Initialize communication node and subscribe to gazebo topic
-    node = gazebo::transport::NodePtr( new gazebo::transport::Node() );
-    node->Init();
-
-    int attempt = 0;
-    while (!world->SensorsInitialized()) {
-        LOG_WARN_S << "waiting for sensors to initialize" << std::endl;
-        usleep(100000);
-        if (++attempt > 100) {
-            LOG_ERROR_S << "sensors did not initialize" << std::endl;
-            return false;
-        }
-    }
-
-    mSensor = gazebo::sensors::get_sensor(sensorFullName);
-    if (!mSensor) {
-        LOG_ERROR_S << "no sensor named " << sensorFullName << " can be found"
-                    << std::endl;
-        return false;
-    }
-    mSensor->SetActive(false);
+    m_node.reset(new gz::transport::Node());
 
     return true;
 }
@@ -63,7 +51,6 @@ bool SensorTask::startHook()
 {
     if (! SensorTaskBase::startHook())
         return false;
-    mSensor->SetActive(true);
     return true;
 }
 void SensorTask::updateHook()
@@ -76,31 +63,45 @@ void SensorTask::errorHook()
 }
 void SensorTask::stopHook()
 {
-    mSensor->SetActive(false);
     SensorTaskBase::stopHook();
 }
 void SensorTask::cleanupHook()
 {
-    node->Fini();
+    m_node.reset();
     SensorTaskBase::cleanupHook();
 }
-void SensorTask::setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor)
+void SensorTask::setGazebo(
+    std::string const& pluginName,
+    gz::sim::Entity const& sensor,
+    std::shared_ptr<const sdf::Element> const& sdf,
+    gz::sim::EntityComponentManager& ecm,
+    gz::sim::EventManager& event_manager
+)
 {
-    BaseTask::setGazeboWorld(model->GetWorld());
+    auto world = findParentOfType(sensor, ecm, components::World::typeId);
+    if (!world.has_value()) {
+        throw std::runtime_error(
+            "expected the sensor parent's to be included in a world"
+        );
+    }
 
-    sdf::ElementPtr sdfLink = sdfSensor->GetParent();
-    this->gazeboModel = model;
-    this->sdfSensor = sdfSensor;
-    this->gazeboLink = model->GetChildLink(sdfLink->Get<string>("name"));
+    setGazeboWorld(ecm, *world);
 
-    sensorFullName = gazeboLink->GetScopedName(true) +
-                     "::" + sdfSensor->Get<string>("name");
-    baseTopicName =
-        "~/" + gazeboLink->GetScopedName() + "/" + sdfSensor->Get<string>("name");
-    std::regex gz_namespace_separator("::");
-    baseTopicName = std::regex_replace(baseTopicName, gz_namespace_separator, "/");
+    auto model = findParentOfType(sensor, ecm, components::Model::typeId);
+    if (!model.has_value()) {
+        throw std::runtime_error("expected the sensor parent's to be a model");
+    }
 
-    string taskName = "gazebo::" + sensorFullName;
+    sdf::ElementPtr sdfLink = sdf->GetParent();
+    m_sdf = sdf;
+    m_gazebo_link = Model(*model).LinkByName(ecm, sdfLink->Get<string>("name"));
+
+    m_sensor_full_name =
+        scopedName(m_gazebo_link, ecm, "::", true) + "::" + m_sdf->Get<string>("name");
+    m_base_topic_name =
+        "~/" + scopedName(m_gazebo_link, ecm, "/") + "/" + m_sdf->Get<string>("name");
+
+    string taskName = "gazebo::" + m_sensor_full_name;
     if (!provides())
         throw std::runtime_error("SensorTask::provides returned NULL");
     provides()->setName(taskName);

@@ -5,6 +5,7 @@
 
 #include "gz_rock/BaseTaskBase.hpp"
 #include <gz/sim/System.hh>
+#include <gz/sim/components/Name.hh>
 #include <gz/msgs/time.pb.h>
 #include <base/Time.hpp>
 
@@ -60,6 +61,11 @@ namespace gz_rock {
         base::Time getCurrentTime(base::Time sim_timestamp) const;
 
         void setGazeboWorld(gz::sim::EntityComponentManager & ecm, gz::sim::Entity world);
+
+        std::optional<gz::sim::Entity> findParentOfType(
+            gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
+            gz::sim::ComponentTypeId const& typeId
+        );
 
         /** TaskContext constructor for BaseTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.

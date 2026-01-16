@@ -3,6 +3,7 @@
 #ifndef ROCK_GAZEBO_SENSORTASK_TASK_HPP
 #define ROCK_GAZEBO_SENSORTASK_TASK_HPP
 
+#include <sdf/Element.hh>
 #include <string>
 
 #include "gz_rock/SensorTaskBase.hpp"
@@ -29,7 +30,7 @@ namespace gz_rock{
     {
 	friend class SensorTaskBase;
     protected:
-        gz::sim::Entity mSensor;
+        gz::sim::Entity m_sensor;
 
     public:
         /** TaskContext constructor for SensorTask
@@ -109,7 +110,7 @@ namespace gz_rock{
 
         virtual void setGazebo(
             std::string const& pluginName,
-            gz::sim::Entity const& entity,
+            gz::sim::Entity const& sensor,
             std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
@@ -119,18 +120,18 @@ namespace gz_rock{
         template<typename M, typename T>
         void topicSubscribe(void(T::*_fp)(const boost::shared_ptr< M const > &), std::string topicName)
         {
-            subscriber = node->Subscribe(topicName, _fp, static_cast<T*>(this));
+            m_subscriber = m_node->Subscribe(topicName, _fp, static_cast<T*>(this));
             gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName << std::endl;
         }
 
-        gz::sim::Entity gazeboModel;
-        gz::sim::Entity gazeboLink;
-        sdf::ElementPtr sdfSensor;
-        std::shared_ptr<gz::transport::Node::Subscriber> subscriber;
-        std::shared_ptr<gz::transport::Node> node;
-        std::mutex readMutex;
-        std::string sensorFullName;
-        std::string baseTopicName;
+        gz::sim::Entity m_gazebo_model;
+        gz::sim::Entity m_gazebo_link;
+        sdf::ElementConstPtr m_sdf;
+        std::shared_ptr<gz::transport::Node::Subscriber> m_subscriber;
+        std::shared_ptr<gz::transport::Node> m_node;
+        std::mutex m_read_mutex;
+        std::string m_sensor_full_name;
+        std::string m_base_topic_name;
     };
 }
 
