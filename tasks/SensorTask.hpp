@@ -10,12 +10,15 @@
 #include <gz/sim/System.hh>
 #include <gz/transport/Node.hh>
 
-namespace gz_rock{
+namespace gz_rock {
 
     /*! \class SensorTask
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
+     * \brief The task context provides and requires services. It uses an ExecutionEngine
+     to perform its functions.
+     * Essential interfaces are operations, data flow ports and properties. These
+     interfaces have been defined using the oroGen specification.
+     * In order to modify the interfaces you should (re)use oroGen and rely on the
+     associated workflow.
      *
      * \details
      * The name of a TaskContext is primarily defined via:
@@ -24,31 +27,35 @@ namespace gz_rock{
          task('custom_task_name','gz_rock::SensorTask')
      end
      \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+     *  It can be dynamically adapted when the deployment is called with a prefix
+     argument.
      */
-    class SensorTask : public SensorTaskBase
-    {
-	friend class SensorTaskBase;
+    class SensorTask : public SensorTaskBase {
+        friend class SensorTaskBase;
+
     protected:
         gz::sim::Entity m_sensor;
 
     public:
         /** TaskContext constructor for SensorTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable via nameservices. \param initial_state The initial TaskState of
+         * the TaskContext. Default is Stopped state.
          */
         SensorTask(std::string const& name = "gz_rock::SensorTask");
 
         /** TaskContext constructor for SensorTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable for nameservices. \param engine The RTT Execution engine to be
+         * used for this task, which serialises the execution of all commands, programs,
+         * state machines and incoming events for a task.
          *
          */
         SensorTask(std::string const& name, RTT::ExecutionEngine* engine);
 
         /** Default deconstructor of SensorTask
          */
-	~SensorTask();
+        ~SensorTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -136,4 +143,3 @@ namespace gz_rock{
 }
 
 #endif
-
