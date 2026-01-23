@@ -9,6 +9,7 @@
 
 #include "gz_rock/ModelTaskBase.hpp"
 #include <base/commands/Joints.hpp>
+#include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 
 namespace gz_rock {
@@ -20,10 +21,8 @@ namespace gz_rock {
 
         friend class ModelTaskBase;
         private:
-            gz::sim::Entity m_model;
+            gz::sim::Entity m_model = gz::sim::kNullEntity;
             sdf::ElementPtr m_sdf;
-
-            Joint_V m_gazebo_joints;
 
             base::samples::Joints m_joints_in;
             void setupJoints();
@@ -97,6 +96,13 @@ namespace gz_rock {
             typedef std::vector<InternalJointExport> JointExportSetup;
             JointExportSetup joint_export_setup;
 
+            std::pair<gz::sim::Entity, std::string> resolveSelectedLink(
+                std::string const& key, std::string const& user_value
+            );
+            void validateExportRequestPortName(
+                std::set<std::string> const& used_names,
+                std::string const& port_name
+            );
             void setupLinks();
             void warpModel(base::samples::RigidBodyState const& modelPose);
             void updateLinks(base::Time const& time);
@@ -111,7 +117,10 @@ namespace gz_rock {
             ) const;
             void updateModelPose(base::Time const& time);
 
-            std::string checkExportedLinkElements(std::string, std::string, std::string);
+            std::string optionOrDefault(
+                std::string const& key, std::string const& value,
+                std::string const& default_value
+            );
 
             void releaseLinks();
             void releaseJoints();
@@ -119,7 +128,7 @@ namespace gz_rock {
         protected:
 
         public:
-            void setGazeboModel(gz::sim::Entity, gz::sim::Entity);
+            void setGazebo(gz::sim::EntityComponentManager& ecm, gz::sim::Entity world, gz::sim::Entity model);
 
             bool startHook();
             void updateHook();

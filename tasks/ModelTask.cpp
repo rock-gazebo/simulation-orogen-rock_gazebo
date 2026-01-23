@@ -6,15 +6,26 @@
 //======================================================================================
 
 #include "ModelTask.hpp"
-#include <gazebo/common/Exception.hh>
+#include <Eigen/src/Geometry/Transform.h>
 #include <base-logging/Logging.hpp>
+#include <gz/sim/Entity.hh>
+#include <gz/sim/Joint.hh>
+#include <gz/sim/Link.hh>
+#include <gz/sim/Model.hh>
+#include <gz/sim/System.hh>
+#include <gz/sim/Util.hh>
+#include <sdf/Joint.hh>
+#include <stdexcept>
+
+#include "Helpers.hpp"
 
 using namespace std;
-using namespace gazebo;
+using namespace gz;
+using namespace gz::sim;
 using namespace gz_rock;
-using ignition::math::Vector3d;
-using ignition::math::Pose3d;
-using ignition::math::Quaterniond;
+using gz::math::Pose3d;
+using gz::math::Quaterniond;
+using gz::math::Vector3d;
 
 ModelTask::ModelTask(string const& name)
     : ModelTaskBase(name)
@@ -35,24 +46,25 @@ ModelTask::~ModelTask()
     releaseLinks();
 }
 
-void ModelTask::setGazeboModel(WorldPtr _world,  ModelPtr _model)
+void ModelTask::setGazebo(EntityComponentManager& ecm, Entity world, Entity model)
 {
-    string name = "gazebo::" + _world->GetName() + "::" + _model->GetName();
+    m_model = model;
+    BaseTask::setGazebo(ecm, world);
+
+    string name = "gazebo::" + getWorldName() + "::" + Model(model).Name(ecm);
     provides()->setName(name);
     _name.set(name);
 
-    BaseTask::setGazeboWorld(_world);
-    model = _model;
-
     if (_model_frame.get().empty()) {
-        _model_frame.set(_model->GetName());
+        _model_frame.set(scopedName(m_model, ecm, "::"));
     }
+
     if (_world_frame.get().empty()) {
-        _world_frame.set(GzGet((*_world), Name, ()));
+        _world_frame.set(getWorldName());
     }
 }
 
-void ModelTask::InternalJointExport::addJoint(JointPtr joint, std::string name)
+void ModelTask::InternalJointExport::addJoint(Entity joint, std::string name)
 {
     gazebo_joints.push_back(joint);
     expected_names.push_back(name);
@@ -66,67 +78,40 @@ void ModelTask::setupJoints()
 {
     JointExportSetup exported_joints;
 
-    // Setup a joint export for the "main" interface
-    InternalJointExport main_joint_export;
-    main_joint_export.permanent = true;
-    main_joint_export.ignore_joint_names = _ignore_joint_names.get();
-    main_joint_export.in_port = &_joints_cmd;
-    main_joint_export.out_port = &_joints_samples;
-    for (auto const& joint : gazebo_joints)
-    {
-#if GAZEBO_MAJOR_VERSION >= 6
-        if (joint->HasType(physics::Base::FIXED_JOINT))
-        {
-            gzmsg << "ModelTask: ignore fixed joint: "
-                  << GzGet((*world), Name, ())
-                  << "/" << model->GetName()
-                  << "/" << joint->GetName() << endl;
-            continue;
-        }
-#endif
-        gzmsg << "ModelTask: found joint (in/out): "
-              << GzGet((*world), Name, ())
-              << "/" << model->GetName()
-              << "/" << joint->GetName() << endl;
-        main_joint_export.addJoint(joint, joint->GetScopedName());
-    }
-    main_joint_export.position_offsets.resize(
-        main_joint_export.gazebo_joints.size(), 0
-    );
-    exported_joints.push_back(main_joint_export);
+    auto model = Model(m_model);
 
-    std::vector<JointExport> requested_exports =
-        _exported_joints.get();
+    std::vector<JointExport> requested_exports = _exported_joints.get();
 
-    for (auto const& export_request : requested_exports)
-    {
+    for (auto const& export_request : requested_exports) {
         string prefix = export_request.prefix;
         size_t export_size = export_request.joints.size();
 
-        if (! export_request.position_offsets.empty()) {
+        if (!export_request.position_offsets.empty()) {
             if (export_request.position_offsets.size() != export_size) {
-                gzthrow("ModelTask: joint export position_offsets field must either be "
-                        "empty, or of the same size of the joints");
+                throw std::invalid_argument(
+                    "ModelTask: joint export position_offsets field must either be "
+                    "empty, or of the same size of the joints");
             }
         }
 
         InternalJointExport export_setup;
-        for (auto const& gz_joint_name : export_request.joints)
-        {
+        for (auto const& gz_joint_name : export_request.joints) {
             if (gz_joint_name.substr(0, prefix.size()) != prefix) {
-                gzthrow("ModelTask: the name of the exported joint " << gz_joint_name
-                        << " does not start with the expected prefix '" + prefix + "'");
+                throw std::invalid_argument(
+                    "ModelTask: the name of the exported joint " + gz_joint_name +
+                    " does not start with the expected prefix '" + prefix + "'");
             }
             string joint_name = gz_joint_name.substr(prefix.size(), std::string::npos);
 
-            auto gz_joint = model->GetJoint(gz_joint_name);
-            if (!gz_joint) {
-                gzthrow("ModelTask: cannot find joint " << gz_joint_name
-                                                        << " requested in export");
+            auto gz_joint = model.JointByName(*m_ecm, gz_joint_name);
+            if (gz_joint == kNullEntity) {
+                throw std::invalid_argument("ModelTask: cannot find joint " +
+                                            gz_joint_name + " requested in export");
             }
-            else if (gz_joint->HasType(physics::Base::FIXED_JOINT)) {
-                gzthrow("ModelTask: requesting to export joint "
-                        << gz_joint_name << " which is a fixed joint");
+
+            if (Joint(gz_joint).Type(*m_ecm).value() == sdf::JointType::FIXED) {
+                std::invalid_argument("ModelTask: requesting to export joint " +
+                                      gz_joint_name + " which is a fixed joint");
             }
 
             export_setup.addJoint(gz_joint, joint_name);
@@ -140,9 +125,7 @@ void ModelTask::setupJoints()
         ports()->addPort(*export_setup.in_port);
         ports()->addPort(*export_setup.out_port);
         if (export_request.position_offsets.empty()) {
-            export_setup.position_offsets.resize(
-                export_setup.gazebo_joints.size(), 0
-            );
+            export_setup.position_offsets.resize(export_setup.gazebo_joints.size(), 0);
         }
         else {
             export_setup.position_offsets = export_request.position_offsets;
@@ -153,72 +136,56 @@ void ModelTask::setupJoints()
     this->joint_export_setup = exported_joints;
 }
 
+static void throwInvalidLinkNames(EntityComponentManager& ecm,
+    Entity model,
+    std::string const& msg)
+{
+    auto links = Model(model).Links(ecm);
+    string link_names =
+        std::accumulate(links.begin(), links.end(), string(), [&](string s, Entity l) {
+            return s + ", " + Link(l).Name(ecm).value();
+        });
+    throw std::invalid_argument(
+        "ModelTask: " + msg + " in model, known links: " + link_names);
+}
+
 void ModelTask::setupLinks()
 {
-
     // The robot configuration YAML file must define the exported links.
     vector<LinkExport> export_conf = _exported_links.get();
 
-    set<string> used_names;
-    for (auto const& export_request : export_conf)
-    {
-        InternalLinkExport exported_link(export_request);
+    std::set<string> used_names;
+    for (auto const& export_request : export_conf) {
+        validateExportRequestPortName(used_names, export_request.port_name);
 
-        exported_link.source_link =
-            checkExportedLinkElements("source_link", export_request.source_link, _world_frame.get());
-        exported_link.target_link =
-            checkExportedLinkElements("target_link", export_request.target_link, _world_frame.get());
-        exported_link.source_frame =
-            checkExportedLinkElements("source_frame", export_request.source_frame, exported_link.source_link);
-        exported_link.target_frame =
-            checkExportedLinkElements("target_frame", export_request.target_frame, exported_link.target_link);
+        InternalLinkExport exported_link;
+        tie(exported_link.source_link_ptr, exported_link.source_link) =
+            resolveSelectedLink("source_link", export_request.source_link);
+        tie(exported_link.target_link_ptr, exported_link.source_link) =
+            resolveSelectedLink("target_link", export_request.target_link);
 
-        if (export_request.source_link != _world_frame.get())
-            exported_link.source_link_ptr = model->GetLink( export_request.source_link );
-        if (export_request.target_link != _world_frame.get())
-            exported_link.target_link_ptr = model->GetLink( export_request.target_link );
         exported_link.port_name = export_request.port_name;
         exported_link.rba_port_name = export_request.port_name + "_acceleration";
         exported_link.wrench_port_name = export_request.port_name + "_wrench";
         exported_link.port_period = export_request.port_period;
 
-        if (exported_link.source_link != _world_frame.get() && !exported_link.source_link_ptr)
-        {
-            physics::Link_V const& links = model->GetLinks();
-            string link_names = std::accumulate(links.begin(), links.end(), string(),
-                    [](string s, physics::LinkPtr l) { return s + ", " + l->GetName(); });
-            gzthrow("ModelTask: cannot find exported source link " << export_request.source_link << " in model, known links: " << link_names);
-        }
-        else if (exported_link.target_link != _world_frame.get() && !exported_link.target_link_ptr)
-        {
-            physics::Link_V const& links = model->GetLinks();
-            string link_names = std::accumulate(links.begin(), links.end(), string(),
-                    [](string s, physics::LinkPtr l) { return s + ", " + l->GetName(); });
-            gzthrow("ModelTask: cannot find exported target link " << export_request.target_link << " in model, known links: " << link_names);
-        }
-        else if (export_request.port_name.empty())
-        { gzthrow("ModelTask: no port name given in link export"); }
-        else if (ports()->getPort(export_request.port_name))
-        { gzthrow("ModelTask: provided port name " << export_request.port_name << " already used on the task interface"); }
-        else if (used_names.find(export_request.port_name) != used_names.end())
-        { gzthrow("ModelTask: provided port name " << export_request.port_name << " already used by another exported link"); }
-
         used_names.insert(exported_link.port_name);
         link_export_setup.push_back(exported_link);
     }
 
-    for (auto& export_setup : link_export_setup)
-    {
+    for (auto& export_setup : link_export_setup) {
         // Create the ports dynamicaly
-        gzmsg << "ModelTask: exporting link "
-            << GzGet((*world), Name, ()) + "/" + model->GetName() + "/" + export_setup.source_link << "2" << export_setup.target_link
-            << " through wrench port " << export_setup.wrench_port_name << ", rbs port " << export_setup.port_name << " and rba port " << export_setup.rba_port_name
-            << " updated every " << export_setup.port_period.toSeconds() << " seconds."
-            << endl;
+        gzmsg << "ModelTask: exporting link " << " of model "
+              << scopedName(m_model, *m_ecm) << export_setup.source_link << "2"
+              << export_setup.target_link << " through wrench port "
+              << export_setup.wrench_port_name << ", " << "rbs port "
+              << export_setup.port_name << " and " << "rba port "
+              << export_setup.rba_port_name << " updated every "
+              << export_setup.port_period.toSeconds() << " seconds." << endl;
 
-        export_setup.wrench_port = new WrenchInPort( export_setup.wrench_port_name );
-        export_setup.port = new RBSOutPort( export_setup.port_name );
-        export_setup.rba_port = new RBAOutPort( export_setup.rba_port_name );
+        export_setup.wrench_port = new WrenchInPort(export_setup.wrench_port_name);
+        export_setup.port = new RBSOutPort(export_setup.port_name);
+        export_setup.rba_port = new RBAOutPort(export_setup.rba_port_name);
         ports()->addPort(*export_setup.wrench_port);
         ports()->addPort(*export_setup.port);
         ports()->addPort(*export_setup.rba_port);
@@ -227,17 +194,15 @@ void ModelTask::setupLinks()
 
 bool ModelTask::startHook()
 {
-    if (! ModelTaskBase::startHook())
+    if (!ModelTaskBase::startHook())
         return false;
 
-    for(auto& exported_joint : joint_export_setup)
-    {
+    for (auto& exported_joint : joint_export_setup) {
         exported_joint.last_command = base::Time();
         exported_joint.joints_out.time = base::Time();
     }
 
-    for(auto& exported_link : link_export_setup)
-    {
+    for (auto& exported_link : link_export_setup) {
         exported_link.lastWrenchCommandTime = base::Time();
         exported_link.last_update = base::Time();
     }
@@ -253,8 +218,7 @@ void ModelTask::updateHook()
         warpModel(modelPose);
 
     updateModelPose(time);
-    for (auto& exported_joint : joint_export_setup)
-    {
+    for (auto& exported_joint : joint_export_setup) {
         writeExportedJointSamples(time, exported_joint);
         readExportedJointCmd(time, exported_joint);
     }
@@ -269,70 +233,63 @@ void ModelTask::warpModel(base::samples::RigidBodyState const& modelPose)
     Quaterniond model2world_q(q.w(), q.x(), q.y(), q.z());
     Pose3d model2world;
     model2world.Set(model2world_v, model2world_q);
-    model->SetWorldPose(model2world);
+    Model(m_model).SetWorldPoseCmd(*m_ecm, model2world);
 }
 
 void ModelTask::updateModelPose(base::Time const& time)
 {
-    Pose3d model2world = GzGetIgn((*model), WorldPose, ());
-    Vector3d model2world_angular_vel = GzGetIgn((*model), RelativeAngularVel, ());
-    Vector3d model2world_vel = GzGetIgn((*model), WorldLinearVel, ());
+    auto link_entity = Model(m_model).CanonicalLink(*m_ecm);
+    auto link = Link(link_entity);
+    Pose3d model2world = link.WorldPose(*m_ecm).value();
+    Vector3d model2world_angular_vel = link.WorldAngularVelocity(*m_ecm).value();
+    Vector3d model2world_vel = link.WorldLinearVelocity(*m_ecm).value();
 
     RigidBodyState rbs;
     rbs.invalidate();
     rbs.time = time;
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
-    rbs.position = base::Vector3d(
-        model2world.Pos().X(),
+    rbs.position = base::Vector3d(model2world.Pos().X(),
         model2world.Pos().Y(),
-        model2world.Pos().Z()
-    );
+        model2world.Pos().Z());
     rbs.cov_position = _cov_position.get();
-    rbs.orientation = base::Quaterniond(
-        model2world.Rot().W(),
+    rbs.orientation = base::Quaterniond(model2world.Rot().W(),
         model2world.Rot().X(),
         model2world.Rot().Y(),
-        model2world.Rot().Z()
-    );
+        model2world.Rot().Z());
     rbs.cov_orientation = _cov_orientation.get();
-    rbs.velocity = base::Vector3d(
-        model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
+    rbs.velocity =
+        base::Vector3d(model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
     rbs.cov_velocity = _cov_velocity.get();
-    rbs.angular_velocity = base::Vector3d(
-        model2world_angular_vel.X(),
+    rbs.angular_velocity = base::Vector3d(model2world_angular_vel.X(),
         model2world_angular_vel.Y(),
-        model2world_angular_vel.Z()
-    );
+        model2world_angular_vel.Z());
     rbs.cov_angular_velocity = _cov_angular_velocity.get();
     _pose_samples.write(rbs);
 }
 
-void ModelTask::writeExportedJointSamples(base::Time const& time, InternalJointExport& exported_joint)
+void ModelTask::writeExportedJointSamples(base::Time const& time,
+    InternalJointExport& exported_joint)
 {
     if (time - exported_joint.joints_out.time < exported_joint.port_period) {
         return;
     }
 
     size_t size = exported_joint.gazebo_joints.size();
-    for (unsigned int i = 0; i < size; ++i)
-    {
+    for (unsigned int i = 0; i < size; ++i) {
         base::JointState& state = exported_joint.joints_out.elements[i];
-        gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
+        auto joint = Joint(exported_joint.gazebo_joints[i]);
 
-        state.speed = joint.GetVelocity(0);
-#if GAZEBO_MAJOR_VERSION >= 8
-        state.position = joint.Position(0);
-#else
-        state.position = joint.GetAngle(0).Radian();
-#endif
+        state.speed = joint.Velocity(*m_ecm).value().at(0);
+        state.position = joint.Position(*m_ecm).value().at(0);
         state.position += exported_joint.position_offsets[i];
     }
     exported_joint.joints_out.time = time;
     exported_joint.out_port->write(exported_joint.joints_out);
 }
 
-void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport& exported_joint)
+void ModelTask::readExportedJointCmd(base::Time const& time,
+    InternalJointExport& exported_joint)
 {
     RTT::FlowStatus flow = exported_joint.in_port->read(exported_joint.joints_in);
 
@@ -352,41 +309,37 @@ void ModelTask::readExportedJointCmd(base::Time const& time, InternalJointExport
     size_t size = exported_joint.gazebo_joints.size();
     for (unsigned int i = 0; i < size; ++i) {
         base::JointState const& cmd = exported_joint.joints_in.elements[i];
-        gazebo::physics::Joint& joint = *exported_joint.gazebo_joints[i];
+        auto joint = Joint(exported_joint.gazebo_joints[i]);
         double position_offset = exported_joint.position_offsets[i];
 
         // Apply effort to joint
         if (cmd.isEffort()) {
-            joint.SetForce(0, cmd.effort);
+            joint.SetForce(*m_ecm, {cmd.effort});
         }
         else if (cmd.isPosition()) {
-            joint.SetPosition(0, cmd.position - position_offset);
+            joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
         }
         else if (cmd.isSpeed()) {
-            joint.SetVelocity(0, cmd.speed);
+            joint.SetVelocity(*m_ecm, {cmd.speed});
         }
         else {
-            LOG_ERROR_S
-                << "Received command that is neither a pure effort, "
-                << "position or speed" << std::endl;
-            LOG_ERROR_S
-                << "p=" << cmd.position
-                << " s=" << cmd.speed
-                << " e=" << cmd.effort
-                << " r=" << cmd.raw
-                << " a=" << cmd.acceleration << std::endl;
+            LOG_ERROR_S << "Received command that is neither a pure effort, "
+                        << "position or speed" << std::endl;
+            LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
+                        << " e=" << cmd.effort << " r=" << cmd.raw
+                        << " a=" << cmd.acceleration << std::endl;
             return exception(INVALID_JOINT_COMMAND);
         }
     }
 }
 
-bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joint) const {
+bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joint) const
+{
     size_t size = exported_joint.gazebo_joints.size();
     if (exported_joint.joints_in.elements.size() != size) {
-        LOG_ERROR_S
-            << "Received command with size "
-            << exported_joint.joints_in.elements.size()
-            << " expected " << size << std::endl;
+        LOG_ERROR_S << "Received command with size "
+                    << exported_joint.joints_in.elements.size() << " expected " << size
+                    << std::endl;
         return false;
     }
 
@@ -399,10 +352,8 @@ bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joi
         for (auto const& s : exported_joint.expected_names) {
             joint_names += " " + s;
         }
-        LOG_ERROR_S
-            << "Received command with "
-            << exported_joint.joints_in.names.size()
-            << " names, expected " << size << ":" << joint_names << std::endl;
+        LOG_ERROR_S << "Received command with " << exported_joint.joints_in.names.size()
+                    << " names, expected " << size << ":" << joint_names << std::endl;
         return false;
     }
 
@@ -410,9 +361,8 @@ bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joi
         std::string const& name = exported_joint.joints_in.names[i];
         std::string const& expected_name = exported_joint.expected_names[i];
         if (name != expected_name) {
-            LOG_ERROR_S
-                << "Expected " << i << "th joint to be "
-                << expected_name << " but it is " << name << std::endl;
+            LOG_ERROR_S << "Expected " << i << "th joint to be " << expected_name
+                        << " but it is " << name << std::endl;
             return false;
         }
     }
@@ -423,61 +373,66 @@ bool ModelTask::validateExportedJointCmd(InternalJointExport const& exported_joi
 void ModelTask::updateLinks(base::Time const& time)
 {
     auto simTime = getSimTime();
-    for(auto& exported_link : link_export_setup)
-    {
-        //do not update the link if the last port writing happened
-        //in less then link_period.
-        if (!(exported_link.last_update.isNull()))
-        {
+    for (auto& exported_link : link_export_setup) {
+        // do not update the link if the last port writing happened
+        // in less then link_period.
+        if (!(exported_link.last_update.isNull())) {
             if ((simTime - exported_link.last_update) < exported_link.port_period)
                 return;
         }
 
-        Pose3d source2world = Pose3d::Zero;
-        Vector3d sourceInWorld_linear_vel  = Vector3d::Zero;
-        Vector3d sourceRelative_angular_vel = Vector3d::Zero;
-        Vector3d sourceRelative_linear_acc  = Vector3d::Zero;
-        Vector3d sourceRelative_angular_acc = Vector3d::Zero;
-        if (exported_link.source_link_ptr)
-        {
-            source2world = GzGetIgn((*(exported_link.source_link_ptr)), WorldPose, ());
-            sourceInWorld_linear_vel   = GzGetIgn((*(exported_link.source_link_ptr)), WorldLinearVel, ());
-            sourceRelative_angular_vel = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularVel, ());
-            sourceRelative_linear_acc   = GzGetIgn((*(exported_link.source_link_ptr)), RelativeLinearAccel, ());
-            sourceRelative_angular_acc  = GzGetIgn((*(exported_link.source_link_ptr)), RelativeAngularAccel, ());
+        Eigen::Isometry3d source2world = Eigen::Isometry3d::Identity();
+        Eigen::Vector3d source2world_linv_in_world = Eigen::Vector3d::Zero();
+        Eigen::Vector3d source2world_angv_in_world = Eigen::Vector3d::Zero();
+        Eigen::Vector3d source2world_linacc_in_world = Eigen::Vector3d::Zero();
+        Eigen::Vector3d source2world_angacc_in_world = Eigen::Vector3d::Zero();
+        if (exported_link.source_link_ptr) {
+            auto link = Link(exported_link.source_link_ptr);
+            source2world = gz2Eigen(link.WorldPose(*m_ecm));
+            source2world_linv_in_world = gz2Eigen(link.WorldLinearVelocity(*m_ecm));
+            source2world_angv_in_world = gz2Eigen(link.WorldAngularVelocity(*m_ecm));
+            source2world_linacc_in_world = gz2Eigen(link.WorldLinearAcceleration(*m_ecm));
+            source2world_angacc_in_world =
+                gz2Eigen(link.WorldAngularAcceleration(*m_ecm));
         }
 
-        Pose3d target2world = Pose3d::Zero;
-        if (exported_link.target_link_ptr)
-            target2world        = GzGetIgn((*(exported_link.target_link_ptr)), WorldPose, ());
+        Eigen::Isometry3d target2world = Eigen::Isometry3d::Identity();
+        if (exported_link.target_link_ptr) {
+            target2world =
+                gz2Eigen(Link(exported_link.target_link_ptr).WorldPose(*m_ecm));
+        }
 
-        Pose3d source2target( Pose3d(source2world - target2world) );
-        Vector3d sourceInTarget_linear_vel (target2world.Rot().RotateVectorReverse(sourceInWorld_linear_vel));
+        Eigen::Isometry3d world2source = source2world.inverse();
+        Eigen::Isometry3d world2target = target2world.inverse();
+        Eigen::Isometry3d source2target = world2target * source2world;
+
+        Eigen::Vector3d source2world_linv_in_target =
+            world2target.rotation() * source2world_linv_in_world;
+        Eigen::Vector3d source2world_angv_in_source =
+            world2source.rotation() * source2world_angv_in_world;
+        Eigen::Vector3d source2world_linacc_in_target =
+            world2target.rotation() * source2world_linacc_in_world;
+        Eigen::Vector3d source2world_angacc_in_target =
+            world2target.rotation() * source2world_angacc_in_world;
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;
         rbs.targetFrame = exported_link.target_frame;
-        rbs.position = base::Vector3d(
-            source2target.Pos().X(),source2target.Pos().Y(),source2target.Pos().Z());
+        rbs.position = source2target.translation();
         rbs.cov_position = exported_link.cov_position;
-        rbs.orientation = base::Quaterniond(
-            source2target.Rot().W(),source2target.Rot().X(),source2target.Rot().Y(),source2target.Rot().Z() );
+        rbs.orientation = source2target.rotation();
         rbs.cov_orientation = exported_link.cov_orientation;
-        rbs.velocity = base::Vector3d(
-            sourceInTarget_linear_vel.X(),sourceInTarget_linear_vel.Y(),sourceInTarget_linear_vel.Z());
+        rbs.velocity = source2world_linv_in_target;
         rbs.cov_velocity = exported_link.cov_velocity;
-        rbs.angular_velocity = base::Vector3d(
-            sourceRelative_angular_vel.X(),sourceRelative_angular_vel.Y(),sourceRelative_angular_vel.Z());
+        rbs.angular_velocity = source2world_angv_in_source;
         rbs.cov_angular_velocity = exported_link.cov_angular_velocity;
         rbs.time = time;
         exported_link.port->write(rbs);
 
         base::samples::RigidBodyAcceleration rba;
         rba.cov_acceleration = exported_link.cov_acceleration;
-        rba.acceleration = base::Vector3d(
-            sourceRelative_linear_acc.X(),sourceRelative_linear_acc.Y(),sourceRelative_linear_acc.Z());
-        rba.angular_acceleration = base::Vector3d(
-            sourceRelative_angular_acc.X(),sourceRelative_angular_acc.Y(),sourceRelative_angular_acc.Z());
+        rba.acceleration = source2world_linacc_in_target;
+        rba.angular_acceleration = source2world_angacc_in_target;
         rba.cov_angular_acceleration = exported_link.cov_angular_acceleration;
         rba.time = time;
         exported_link.rba_port->write(rba);
@@ -485,40 +440,47 @@ void ModelTask::updateLinks(base::Time const& time)
         exported_link.last_update = simTime;
     }
 
-    for(auto& exported_link : link_export_setup)
-    {
-        RTT::FlowStatus flow = exported_link.wrench_port->readNewest( exported_link.wrench_in );
-        if (flow == RTT::NewData)
-        {
+    for (auto& exported_link : link_export_setup) {
+        RTT::FlowStatus flow =
+            exported_link.wrench_port->readNewest(exported_link.wrench_in);
+        if (flow == RTT::NewData) {
             exported_link.lastWrenchCommandTime = time;
             exported_link.lastWrenchCommand = exported_link.wrench_in;
         }
         else if (exported_link.lastWrenchCommandTime.isNull())
             continue;
-        else if (time - exported_link.lastWrenchCommandTime >= _wrench_command_timeout.get())
+        else if (time - exported_link.lastWrenchCommandTime >=
+                 _wrench_command_timeout.get())
             continue;
         else
             exported_link.wrench_in = exported_link.lastWrenchCommand;
 
-        Pose3d source2world = GzGetIgn((*exported_link.source_link_ptr), WorldPose, ());
+        Link link(exported_link.source_link_ptr);
+        Eigen::Quaterniond source2world_q =
+            gz2Eigen(link.WorldPose(*m_ecm).value().Rot());
+        Eigen::Quaterniond world2source_q = source2world_q.inverse();
 
-        exported_link.source_link_ptr->SetForce(source2world.Rot().RotateVector(
-                    Vector3d(exported_link.wrench_in.force[0], exported_link.wrench_in.force[1], exported_link.wrench_in.force[2])));
-        exported_link.source_link_ptr->SetTorque(source2world.Rot().RotateVector(
-                    Vector3d(exported_link.wrench_in.torque[0], exported_link.wrench_in.torque[1], exported_link.wrench_in.torque[2])));
+        Eigen::Vector3d force_in_source = exported_link.wrench_in.force;
+        Eigen::Vector3d torque_in_source = exported_link.wrench_in.torque;
+        Eigen::Vector3d force_in_world = world2source_q * force_in_source;
+        Eigen::Vector3d torque_in_world = world2source_q * torque_in_source;
+
+        link.AddWorldWrench(*m_ecm, eigen2Gz(force_in_world), eigen2Gz(torque_in_world));
     }
 }
 
 bool ModelTask::configureHook()
 {
-    if( ! ModelTaskBase::configureHook() )
+    if (!ModelTaskBase::configureHook()) {
         return false;
+    }
 
     // Test if setGazeboModel() has been called -> if world/model are NULL
-    if( (!world) && (!model) )
-        return false;
+    if (m_model == kNullEntity) {
+        throw std::logic_error(
+            "must call setGazebo before configuring a gz_rock::ModelTask");
+    }
 
-    gazebo_joints = model->GetJoints();
     setupLinks();
     setupJoints();
 
@@ -534,10 +496,8 @@ void ModelTask::cleanupHook()
 
 void ModelTask::releaseJoints()
 {
-    for (auto& export_setup : joint_export_setup)
-    {
-        if (!export_setup.permanent)
-        {
+    for (auto& export_setup : joint_export_setup) {
+        if (!export_setup.permanent) {
             ports()->removePort(export_setup.in_port->getName());
             delete export_setup.in_port;
             export_setup.in_port = nullptr;
@@ -552,15 +512,13 @@ void ModelTask::releaseJoints()
 
 void ModelTask::releaseLinks()
 {
-    for(auto& exported_link : link_export_setup)
-    {
+    for (auto& exported_link : link_export_setup) {
         if (exported_link.wrench_port != NULL) {
             ports()->removePort(exported_link.wrench_port->getName());
             delete exported_link.wrench_port;
             exported_link.wrench_port = NULL;
         }
-        if (exported_link.port)
-        {
+        if (exported_link.port) {
             ports()->removePort(exported_link.port->getName());
             delete exported_link.port;
             exported_link.port = NULL;
@@ -574,17 +532,57 @@ void ModelTask::releaseLinks()
     link_export_setup.clear();
 }
 
-string ModelTask::checkExportedLinkElements(string element_name, string test, string option)
+pair<Entity, string> ModelTask::resolveSelectedLink(std::string const& key,
+    std::string const& user_value)
 {
-    // when not defined, source_link and target_link will recieve "world".
-    // when not defined, source_frame and target_frame will receive source_link and target_link content
-    if( test.empty() )
-    {
-        gzmsg << "ModelTask: " << model->GetName() << " " << element_name << " not defined, using "<< option << endl;
-        return option;
-    }else {
-        gzmsg << "ModelTask: " << model->GetName() << " " << element_name << ": " << test << endl;
-        return test;
+    auto default_value = _world_frame.get();
+    auto value = optionOrDefault(key, user_value, default_value);
+    if (value != default_value) {
+        auto ptr = Model(m_model).LinkByName(*m_ecm, value);
+        ;
+        if (ptr == kNullEntity) {
+            throwInvalidLinkNames(*m_ecm,
+                m_model,
+                "cannot find exported source link " + value);
+        }
+
+        Link(ptr).EnableAccelerationChecks(*m_ecm, true);
+        Link(ptr).EnableVelocityChecks(*m_ecm, true);
+        return make_pair(ptr, value);
+    }
+
+    return make_pair(kNullEntity, value);
+}
+
+void ModelTask::validateExportRequestPortName(std::set<std::string> const& used_names,
+    std::string const& port_name)
+{
+    if (port_name.empty()) {
+        throw std::invalid_argument("ModelTask: no port name given in link export");
+    }
+    else if (ports()->getPort(port_name)) {
+        throw std::invalid_argument("ModelTask: provided port name " + port_name +
+                                    " already used on the task interface");
+    }
+    else if (used_names.find(port_name) != used_names.end()) {
+        throw std::invalid_argument("ModelTask: provided port name " + port_name +
+                                    " already used by another exported link");
     }
 }
 
+string ModelTask::optionOrDefault(string const& key,
+    string const& value,
+    string const& default_value)
+{
+    auto model_name = scopedName(m_model, *m_ecm, "::");
+
+    if (value.empty()) {
+        gzmsg << "ModelTask: " << model_name << " " << key << " not set, using "
+              << default_value << endl;
+        return default_value;
+    }
+    else {
+        gzmsg << "ModelTask: " << model_name << " " << key << ": " << value << endl;
+        return value;
+    }
+}

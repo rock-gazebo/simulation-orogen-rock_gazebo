@@ -5,6 +5,7 @@
 #include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/World.hh>
+#include <stdexcept>
 
 using namespace gz_rock;
 using namespace gz;
@@ -25,7 +26,7 @@ BaseTask::~BaseTask()
 {
 }
 
-void BaseTask::setGazeboWorld(EntityComponentManager & ecm, Entity world)
+void BaseTask::setGazebo(EntityComponentManager & ecm, Entity world)
 {
     m_world = world;
     m_ecm.reset(&ecm);
@@ -77,6 +78,13 @@ bool BaseTask::configureHook()
 {
     if (! BaseTaskBase::configureHook())
         return false;
+
+    if (m_world == kNullEntity) {
+        throw std::logic_error(
+            "must call setGazebo before configuring a gz_rock::BaseTask task"
+        );
+    }
+
     return true;
 }
 bool BaseTask::startHook()

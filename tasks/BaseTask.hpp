@@ -4,6 +4,7 @@
 #define ROCK_GAZEBO_BASETASK_TASK_HPP
 
 #include "gz_rock/BaseTaskBase.hpp"
+#include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/components/Name.hh>
 #include <gz/msgs/time.pb.h>
@@ -31,11 +32,11 @@ namespace gz_rock {
 
     protected:
         std::shared_ptr<gz::sim::EntityComponentManager> m_ecm;
-        gz::sim::Entity m_world;
+        gz::sim::Entity m_world = gz::sim::kNullEntity;
         base::Time m_sim_time;
 
     public:
-        /** Returns the name of the underlying world */
+        /** Returns the unscoped name of the underlying world */
         std::string getWorldName() const;
 
         /** Hook for the gz_rock system plugin to announce the simulation time
@@ -60,7 +61,7 @@ namespace gz_rock {
          */
         base::Time getCurrentTime(base::Time sim_timestamp) const;
 
-        void setGazeboWorld(gz::sim::EntityComponentManager & ecm, gz::sim::Entity world);
+        void setGazebo(gz::sim::EntityComponentManager & ecm, gz::sim::Entity world);
 
         std::optional<gz::sim::Entity> findParentOfType(
             gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
