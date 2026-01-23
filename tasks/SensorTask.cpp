@@ -85,7 +85,7 @@ void SensorTask::setGazebo(
         );
     }
 
-    setGazeboWorld(ecm, *world);
+    SensorTaskBase::setGazebo(ecm, *world);
 
     auto model = findParentOfType(sensor, ecm, components::Model::typeId);
     if (!model.has_value()) {

@@ -1,9 +1,10 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "CameraTask.hpp"
+#include <base/samples/Frame.hpp>
+#include "Helpers.hpp"
 
 using namespace std;
-using namespace gazebo;
 using namespace gz_rock;
 
 CameraTask::CameraTask(std::string const& name)
@@ -33,7 +34,7 @@ bool CameraTask::configureHook()
     if (! CameraTaskBase::configureHook())
         return false;
 
-    topicSubscribe(&CameraTask::readInput, baseTopicName + "/image");
+    topicSubscribe(&CameraTask::readInput, m_base_topic_name + "/image");
     return true;
 }
 bool CameraTask::startHook()
@@ -41,20 +42,12 @@ bool CameraTask::startHook()
     if (! CameraTaskBase::startHook()) {
         return false;
     }
-    hasNewSample = false;
+
     return true;
 }
 void CameraTask::updateHook()
 {
     CameraTaskBase::updateHook();
-
-    lock_guard<mutex> readGuard(readMutex);
-    if (!hasNewSample) {
-        return;
-    }
-    hasNewSample = false;
-
-    _frame.write(output_frame);
 }
 void CameraTask::errorHook()
 {
@@ -69,34 +62,26 @@ void CameraTask::cleanupHook()
     CameraTaskBase::cleanupHook();
 }
 
-void CameraTask::readInput( ConstImagePtr & imageMsg)
+void CameraTask::readInput(gz::msgs::Image const& image)
 {
     if (state() != RUNNING) {
         return;
     }
 
-    lock_guard<mutex> readGuard(readMutex);
-
-    const msgs::Image &image = imageMsg->image();
-
-    // Convert the image data to RGB and copy to frame struct
-    common::Image img;
-    img.SetFromData((unsigned char *)(image.data().c_str()),image.width(),image.height(),
-                    (common::Image::PixelFormat)(image.pixel_format()));
-
-    unsigned char *data = NULL;
-    unsigned int size = 0;
-    img.GetRGBData(&data,size);
-
     base::samples::frame::Frame *pframe = output_frame.write_access();
-    pframe->init(image.width(),image.height(),8,base::samples::frame::MODE_RGB);
-    if(size != pframe->image.size())
+    auto pixel_format = gzToRock(image.pixel_format_type());
+    pframe->init(
+        image.width(), image.height(),
+        pixel_format.first, pixel_format.second
+    );
+
+    if (image.ByteSizeLong() != pframe->image.size()) {
         throw std::runtime_error("gz_rock::CameraTask image size mismatch");
-    memcpy((void*)&(pframe->image.front()),(void*)data,size);
+    }
+    memcpy((void*)&(pframe->image.front()), (void*)image.data().data(), image.ByteSizeLong());
     pframe->time = getCurrentTime();
     pframe->frame_status = base::samples::frame::STATUS_VALID;
     output_frame.reset(pframe);
-    pframe = NULL;
-    hasNewSample = true;
-    delete [] data;
+
+    _frame.write(pframe);
 }

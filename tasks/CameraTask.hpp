@@ -94,8 +94,7 @@ namespace gz_rock{
         void cleanupHook();
 
     private:
-        void readInput( gz::msgs::ConstImageSharedPtr &imageMsg);
-        bool hasNewSample;
+        void readInput(gz::msgs::Image const& image);
         RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> output_frame;
     };
 }
