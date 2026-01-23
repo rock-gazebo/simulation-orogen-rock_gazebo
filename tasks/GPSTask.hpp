@@ -39,14 +39,19 @@ namespace gz_rock{
         gps_base::UTMConverter utm_converter;
         double deviationHorizontal;
         double deviationVertical;
-        void setGazeboModel(ModelPtr model, sdf::ElementPtr sdfSensor);
+        void setGazebo(
+            std::string const& pluginName,
+            gz::sim::Entity const& sensor,
+            std::shared_ptr<sdf::Element> const& sdf,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::EventManager& event_manager
+        ) override;
 
-        bool hasNewSample;
         gps_base::Solution solution;
         gz::math::SphericalCoordinates gazeboSpherical;
 
     protected:
-        void readInput(gz::msgs::ConstGPSSharedPtr &msg);
+        void readInput(gz::msgs::GPS const& msg);
 
     public:
         /** TaskContext constructor for GPSTask

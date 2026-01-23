@@ -39,7 +39,6 @@ void ImuTask::setGazebo(
     ImuTaskBase::setGazebo(pluginName, sensor, sdf, ecm, event_manager);
 
     m_initial_orientation = gz::sim::Link(m_gazebo_link).WorldPose(ecm)->Rot();
-
 }
 
 /// The following lines are template definitions for the various state machine
