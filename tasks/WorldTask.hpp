@@ -30,17 +30,23 @@ namespace gz_rock {
     private:
         friend class WorldTaskBase;
 
+        base::Time m_sim_time;
         gz::sim::Entity m_world;
+        gz::sim::EntityComponentManager* m_ecm = nullptr;
         std::string getWorldName() const;
 
     public:
         virtual void setGazebo(
             std::string const& pluginName,
             gz::sim::Entity const& entity,
-            std::shared_ptr<const sdf::Element> const& sdf,
+            std::shared_ptr<sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         );
+
+        /** Hook for the gz_rock system plugin to announce the simulation time
+         */
+        void setSimTime(base::Time const& time);
 
         /** TaskContext constructor for WorldTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.

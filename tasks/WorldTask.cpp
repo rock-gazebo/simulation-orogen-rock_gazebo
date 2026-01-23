@@ -1,7 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "WorldTask.hpp"
-#include <gz/sim/components/World.hh>
+#include <gz/sim/World.hh>
 
 using namespace gz_rock;
 using namespace gz::sim;
@@ -24,19 +24,24 @@ WorldTask::~WorldTask()
 void WorldTask::setGazebo(
     std::string const& pluginName,
     Entity const& entity,
-    std::shared_ptr<const sdf::Element> const& sdf,
+    std::shared_ptr<sdf::Element> const& sdf,
     EntityComponentManager& ecm,
     EventManager& event_manager
 ) {
     m_world = entity;
+    m_ecm = &ecm;
 
     provides()->setName("gazebo::" + getWorldName());
     _name.set(getWorldName());
 }
 
+void WorldTask::setSimTime(base::Time const& time) {
+    m_sim_time = time;
+}
+
 std::string WorldTask::getWorldName() const
 {
-    return components::World(m_world).GetName();
+    return World(m_world).Name(*m_ecm).value();
 }
 
 /// The following lines are template definitions for the various state machine
@@ -57,10 +62,8 @@ bool WorldTask::startHook()
 }
 void WorldTask::updateHook()
 {
-    common::Time sim_time = components::World(m_world).GetSimTime();
-    _time.write(
-            base::Time::fromSeconds(sim_time.sec) +
-            base::Time::fromMicroseconds(sim_time.nsec / 1000));
+    _time.write(m_sim_time);
+
     WorldTaskBase::updateHook();
 }
 void WorldTask::errorHook()
