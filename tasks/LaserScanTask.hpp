@@ -26,9 +26,9 @@ namespace gz_rock {
         void cleanupHook();
 
     private:
-        void outputLaserScan(gz::msgs::ConstLaserScanSharedPtr& laserScanMSG);
-        void outputDepthMap(gz::msgs::ConstLaserScanSharedPtr& laserScanMSG);
-        void readInput(gz::msgs::ConstLaserScanSharedPtr& laserScanMSG);
+        void outputLaserScan(gz::msgs::LaserScan const& scan);
+        void outputDepthMap(gz::msgs::LaserScan const& scan);
+        void readInput(gz::msgs::LaserScan const& scan);
         bool hasNewSample;
         base::samples::LaserScan scan;
         base::samples::DepthMap m_depth_map;
