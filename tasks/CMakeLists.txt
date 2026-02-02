@@ -34,5 +34,6 @@ execute_process(
 )
 
 INSTALL(FILES ${GZ_ROCK_TASKLIB_HEADERS}
+    ModelPluginTaskI.hpp
     DESTINATION include/orocos/gz_rock)
 
