@@ -37,8 +37,7 @@ namespace gz_rock {
 
     public:
         virtual void setGazebo(
-            std::string const& pluginName,
-            gz::sim::Entity const& entity,
+            gz::sim::Entity const& worldEntity,
             std::shared_ptr<sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager

@@ -20,15 +20,13 @@ WorldTask::~WorldTask()
 {
 }
 
-
 void WorldTask::setGazebo(
-    std::string const& pluginName,
-    Entity const& entity,
+    Entity const& worldEntity,
     std::shared_ptr<sdf::Element> const& sdf,
     EntityComponentManager& ecm,
     EventManager& event_manager
 ) {
-    m_world = entity;
+    m_world = worldEntity;
     m_ecm = &ecm;
 
     provides()->setName("gazebo::" + getWorldName());
@@ -41,7 +39,7 @@ void WorldTask::setSimTime(base::Time const& time) {
 
 std::string WorldTask::getWorldName() const
 {
-    return World(m_world).Name(*m_ecm).value();
+    return World(m_world).Name(*m_ecm).value_or("world");
 }
 
 /// The following lines are template definitions for the various state machine
