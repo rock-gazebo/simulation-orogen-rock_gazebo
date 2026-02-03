@@ -111,9 +111,8 @@ namespace gz_rock{
 
     protected:
         void setGazebo(
-            std::string const& pluginName,
             gz::sim::Entity const& sensor,
-            std::shared_ptr<sdf::Element> const& sdf,
+            std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         ) override;

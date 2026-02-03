@@ -34,29 +34,28 @@ GPSTask::~GPSTask()
 }
 
 void GPSTask::setGazebo(
-    std::string const& pluginName,
     gz::sim::Entity const& sensor,
-    std::shared_ptr<sdf::Element> const& sdf,
+    std::shared_ptr<const sdf::Element> const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager
 )
 {
-    GPSTaskBase::setGazebo(pluginName, sensor, sdf, ecm, event_manager);
-    sdf::ElementPtr gps = sdf->GetElement("gps");
+    GPSTaskBase::setGazebo(sensor, sdf, ecm, event_manager);
+    sdf::ElementConstPtr gps = sdf->FindElement("gps");
 
-    sdf::ElementPtr h_noise = gps
-        ->GetElement("position_sensing")
-        ->GetElement("horizontal")
-        ->GetElement("noise");
+    sdf::ElementConstPtr h_noise = gps
+        ->FindElement("position_sensing")
+        ->FindElement("horizontal")
+        ->FindElement("noise");
     deviationHorizontal = 1;
     if (h_noise->HasElement("stddev")) {
         deviationHorizontal = h_noise->Get<double>("stddev");
     }
 
-    sdf::ElementPtr v_noise = gps
-        ->GetElement("position_sensing")
-        ->GetElement("vertical")
-        ->GetElement("noise");
+    sdf::ElementConstPtr v_noise = gps
+        ->FindElement("position_sensing")
+        ->FindElement("vertical")
+        ->FindElement("noise");
     deviationVertical = 1;
     if (v_noise->HasElement("stddev")) {
         deviationVertical = v_noise->Get<double>("stddev");

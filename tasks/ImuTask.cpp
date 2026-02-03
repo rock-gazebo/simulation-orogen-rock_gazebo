@@ -30,13 +30,12 @@ ImuTask::~ImuTask()
 }
 
 void ImuTask::setGazebo(
-    std::string const& pluginName,
     gz::sim::Entity const& sensor,
-    std::shared_ptr<sdf::Element> const& sdf,
+    std::shared_ptr<const sdf::Element> const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager
 ) {
-    ImuTaskBase::setGazebo(pluginName, sensor, sdf, ecm, event_manager);
+    ImuTaskBase::setGazebo(sensor, sdf, ecm, event_manager);
 
     m_initial_orientation = gz::sim::Link(m_gazebo_link).WorldPose(ecm)->Rot();
 }

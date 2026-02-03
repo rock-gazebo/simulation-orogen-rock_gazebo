@@ -22,7 +22,7 @@ WorldTask::~WorldTask()
 
 void WorldTask::setGazebo(
     Entity const& worldEntity,
-    std::shared_ptr<sdf::Element> const& sdf,
+    std::shared_ptr<const sdf::Element> const& sdf,
     EntityComponentManager& ecm,
     EventManager& event_manager
 ) {
