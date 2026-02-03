@@ -22,11 +22,15 @@ task_context 'WorldTask' do
 end
 
 task_context 'BaseTask' do
+    abstract
     needs_configuration
 
     # Controls whether the components should use the simulation time (the
     # default) or wall-clock time
     property 'use_sim_time', '/bool', true
+
+    # Plugin-generated task name
+    property "name", "string"
 end
 
 # Representation of a gazebo Model object
@@ -90,12 +94,6 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     dynamic_output_port(/_samples$/, '/base/samples/Joints')
 
     exception_states 'INVALID_JOINT_COMMAND'
-end
-
-task_context 'ModelPluginTask', subclasses: 'BaseTask' do
-    abstract
-    needs_configuration
-    attribute 'name', '/std/string'
 end
 
 task_context 'SensorTask', subclasses: 'BaseTask' do

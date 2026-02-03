@@ -6,6 +6,7 @@
 #include <gz/sim/System.hh>
 #include <gz/sim/World.hh>
 #include <stdexcept>
+#include <regex>
 
 using namespace gz_rock;
 using namespace gz;
@@ -24,17 +25,6 @@ BaseTask::BaseTask(std::string const& name, RTT::ExecutionEngine* engine)
 
 BaseTask::~BaseTask()
 {
-}
-
-void BaseTask::setGazebo(EntityComponentManager & ecm, Entity world)
-{
-    m_world = world;
-    m_ecm.reset(&ecm);
-}
-
-std::string BaseTask::getWorldName() const
-{
-    return *World(m_world).Name(*m_ecm);
 }
 
 void BaseTask::setSimTime(base::Time const& sim_time)
@@ -79,12 +69,6 @@ bool BaseTask::configureHook()
     if (! BaseTaskBase::configureHook())
         return false;
 
-    if (m_world == kNullEntity) {
-        throw std::logic_error(
-            "must call setGazebo before configuring a gz_rock::BaseTask task"
-        );
-    }
-
     return true;
 }
 bool BaseTask::startHook()
@@ -122,4 +106,25 @@ std::optional<gz::sim::Entity> BaseTask::findParentOfType(
         }
     }
     return std::make_optional(search);
+}
+
+std::string BaseTask::getNamespaceFromPluginName(std::string const& plugin_name)
+{
+    return std::regex_replace(plugin_name, std::regex("__"), "/");
+}
+
+void BaseTask::setGazebo(
+    std::string const& pluginName,
+    gz::sim::Entity const& entity,
+    sdf::ElementConstPtr const& sdf,
+    gz::sim::EntityComponentManager& ecm,
+    gz::sim::EventManager& event_manager
+) {
+}
+
+
+void BaseTask::setGazeboPluginTaskName(std::string const& plugin_task_name)
+{
+    provides()->setName(plugin_task_name);
+    _name.set(plugin_task_name);
 }

@@ -40,8 +40,9 @@ namespace gz_rock{
         double deviationHorizontal;
         double deviationVertical;
         void setGazebo(
-            gz::sim::Entity const& sensor,
-            std::shared_ptr<const sdf::Element> const& sdf,
+            std::string const& pluginName,
+            gz::sim::Entity const& entity,
+            sdf::ElementConstPtr const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         ) override;

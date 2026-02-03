@@ -34,13 +34,14 @@ GPSTask::~GPSTask()
 }
 
 void GPSTask::setGazebo(
-    gz::sim::Entity const& sensor,
-    std::shared_ptr<const sdf::Element> const& sdf,
+    std::string const& pluginName,
+    gz::sim::Entity const& entity,
+    sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager
 )
 {
-    GPSTaskBase::setGazebo(sensor, sdf, ecm, event_manager);
+    GPSTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
     sdf::ElementConstPtr gps = sdf->FindElement("gps");
 
     sdf::ElementConstPtr h_noise = gps

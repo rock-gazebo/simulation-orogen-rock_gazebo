@@ -12,6 +12,7 @@
 #include <gz/sim/Joint.hh>
 #include <gz/sim/Link.hh>
 #include <gz/sim/Model.hh>
+#include <gz/sim/World.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/Util.hh>
 #include <sdf/Joint.hh>
@@ -46,12 +47,19 @@ ModelTask::~ModelTask()
     releaseLinks();
 }
 
-void ModelTask::setGazebo(EntityComponentManager& ecm, Entity world, Entity model)
-{
-    m_model = model;
-    BaseTask::setGazebo(ecm, world);
+void ModelTask::setGazebo(
+    std::string const& plugin_name,
+    gz::sim::Entity const& model_entity,
+    sdf::ElementConstPtr const& model_sdf,
+    gz::sim::EntityComponentManager& ecm,
+    gz::sim::EventManager& event_manager
+) {
+    m_model = model_entity;
+    m_ecm = &ecm;
 
-    string name = "gazebo::" + getWorldName() + "::" + Model(model).Name(ecm);
+    ModelTaskBase::setGazebo(plugin_name, model_entity, model_sdf, ecm, event_manager);
+
+    string name = "gazebo::" + scopedName(model_entity, ecm, "::");
     provides()->setName(name);
     _name.set(name);
 
@@ -60,8 +68,13 @@ void ModelTask::setGazebo(EntityComponentManager& ecm, Entity world, Entity mode
     }
 
     if (_world_frame.get().empty()) {
-        _world_frame.set(getWorldName());
+        auto world = gz::sim::worldEntity(model_entity, ecm);
+        _world_frame.set(gz::sim::World(world).Name(ecm).value_or("world"));
     }
+
+    auto link_entity = Model(m_model).CanonicalLink(*m_ecm);
+    Link(link_entity).EnableAccelerationChecks(*m_ecm, true);
+    Link(link_entity).EnableVelocityChecks(*m_ecm, true);
 }
 
 void ModelTask::InternalJointExport::addJoint(Entity joint, std::string name)
@@ -240,30 +253,34 @@ void ModelTask::updateModelPose(base::Time const& time)
 {
     auto link_entity = Model(m_model).CanonicalLink(*m_ecm);
     auto link = Link(link_entity);
-    Pose3d model2world = link.WorldPose(*m_ecm).value();
-    Vector3d model2world_angular_vel = link.WorldAngularVelocity(*m_ecm).value();
-    Vector3d model2world_vel = link.WorldLinearVelocity(*m_ecm).value();
+    auto model2world = link.WorldPose(*m_ecm);
+    auto model2world_angular_vel = link.WorldAngularVelocity(*m_ecm);
+    auto model2world_vel = link.WorldLinearVelocity(*m_ecm);
+
+    auto model2world_pos = model2world->Pos();
+    auto model2world_rot = model2world->Rot();
 
     RigidBodyState rbs;
     rbs.invalidate();
     rbs.time = time;
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
-    rbs.position = base::Vector3d(model2world.Pos().X(),
-        model2world.Pos().Y(),
-        model2world.Pos().Z());
+    rbs.position = base::Vector3d(model2world_pos.X(),
+        model2world_pos.Y(),
+        model2world_pos.Z());
     rbs.cov_position = _cov_position.get();
-    rbs.orientation = base::Quaterniond(model2world.Rot().W(),
-        model2world.Rot().X(),
-        model2world.Rot().Y(),
-        model2world.Rot().Z());
+    rbs.orientation = base::Quaterniond(model2world_rot.W(),
+        model2world_rot.X(),
+        model2world_rot.Y(),
+        model2world_rot.Z());
     rbs.cov_orientation = _cov_orientation.get();
     rbs.velocity =
-        base::Vector3d(model2world_vel.X(), model2world_vel.Y(), model2world_vel.Z());
+        base::Vector3d(model2world_vel->X(), model2world_vel->Y(), model2world_vel->Z());
     rbs.cov_velocity = _cov_velocity.get();
-    rbs.angular_velocity = base::Vector3d(model2world_angular_vel.X(),
-        model2world_angular_vel.Y(),
-        model2world_angular_vel.Z());
+
+    rbs.angular_velocity = base::Vector3d(model2world_angular_vel->X(),
+        model2world_angular_vel->Y(),
+        model2world_angular_vel->Z());
     rbs.cov_angular_velocity = _cov_angular_velocity.get();
     _pose_samples.write(rbs);
 }

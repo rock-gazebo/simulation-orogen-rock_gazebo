@@ -71,6 +71,7 @@ void SensorTask::cleanupHook()
     SensorTaskBase::cleanupHook();
 }
 void SensorTask::setGazebo(
+    std::string const& plugin_name,
     gz::sim::Entity const& sensor,
     std::shared_ptr<const sdf::Element> const& sdf,
     gz::sim::EntityComponentManager& ecm,
@@ -84,7 +85,7 @@ void SensorTask::setGazebo(
         );
     }
 
-    SensorTaskBase::setGazebo(ecm, *world);
+    SensorTaskBase::setGazebo(plugin_name, sensor, sdf, ecm, event_manager);
 
     auto model = findParentOfType(sensor, ecm, components::Model::typeId);
     if (!model.has_value()) {

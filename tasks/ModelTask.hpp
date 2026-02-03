@@ -8,9 +8,12 @@
 #define ROCK_GAZEBO_MODELTASK_TASK_HPP
 
 #include "gz_rock/ModelTaskBase.hpp"
+#include "gz_rock/PluginTaskI.hpp"
 #include <base/commands/Joints.hpp>
 #include <gz/sim/Entity.hh>
+#include <gz/sim/EventManager.hh>
 #include <gz/sim/System.hh>
+#include <sdf/Element.hh>
 
 namespace gz_rock {
     class ModelTask : public ModelTaskBase
@@ -22,6 +25,7 @@ namespace gz_rock {
         friend class ModelTaskBase;
         private:
             gz::sim::Entity m_model = gz::sim::kNullEntity;
+            gz::sim::EntityComponentManager* m_ecm = nullptr;
             sdf::ElementPtr m_sdf;
 
             base::samples::Joints m_joints_in;
@@ -128,7 +132,13 @@ namespace gz_rock {
         protected:
 
         public:
-            void setGazebo(gz::sim::EntityComponentManager& ecm, gz::sim::Entity world, gz::sim::Entity model);
+            void setGazebo(
+                std::string const& plugin_name,
+                gz::sim::Entity const& model_entity,
+                sdf::ElementConstPtr const& model_sdf,
+                gz::sim::EntityComponentManager& ecm,
+                gz::sim::EventManager& event_manager
+            ) override;
 
             bool startHook();
             void updateHook();

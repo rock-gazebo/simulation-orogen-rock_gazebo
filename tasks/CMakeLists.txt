@@ -29,11 +29,11 @@ INSTALL(TARGETS ${GZ_ROCK_TASKLIB_NAME}
 # If you are wondering. Yes. This really sucks badly
 execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${CMAKE_CURRENT_SOURCE_DIR}/ModelPluginTaskI.hpp
-    ${CMAKE_SOURCE_DIR}/.orogen/gz_rock/ModelPluginTaskI.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PluginTaskI.hpp
+    ${CMAKE_SOURCE_DIR}/.orogen/gz_rock/PluginTaskI.hpp
 )
 
 INSTALL(FILES ${GZ_ROCK_TASKLIB_HEADERS}
-    ModelPluginTaskI.hpp
+    PluginTaskI.hpp
     DESTINATION include/orocos/gz_rock)
 

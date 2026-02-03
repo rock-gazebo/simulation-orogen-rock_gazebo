@@ -4,6 +4,8 @@
 #define ROCK_GAZEBO_BASETASK_TASK_HPP
 
 #include "gz_rock/BaseTaskBase.hpp"
+#include "gz_rock/PluginTaskI.hpp"
+
 #include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/components/Name.hh>
@@ -26,19 +28,14 @@ namespace gz_rock {
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix argument.
      */
-    class BaseTask : public BaseTaskBase
+    class BaseTask : public BaseTaskBase, public PluginTaskI
     {
-	friend class BaseTaskBase;
+        friend class BaseTaskBase;
 
     protected:
-        std::shared_ptr<gz::sim::EntityComponentManager> m_ecm;
-        gz::sim::Entity m_world = gz::sim::kNullEntity;
         base::Time m_sim_time;
 
     public:
-        /** Returns the unscoped name of the underlying world */
-        std::string getWorldName() const;
-
         /** Hook for the gz_rock system plugin to announce the simulation time
          */
         void setSimTime(base::Time const& time);
@@ -60,8 +57,6 @@ namespace gz_rock {
          * use_sim_time property
          */
         base::Time getCurrentTime(base::Time sim_timestamp) const;
-
-        void setGazebo(gz::sim::EntityComponentManager & ecm, gz::sim::Entity world);
 
         std::optional<gz::sim::Entity> findParentOfType(
             gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
@@ -140,6 +135,26 @@ namespace gz_rock {
          * before calling start() again.
          */
         void cleanupHook();
+
+        /** Get a topic name from the given plugin name
+         *
+         * This method replaces '__' for '/' in 'pluginName'
+         */
+        std::string getNamespaceFromPluginName(std::string const& plugin_name);
+
+        /** Called by the plugins to connect the task and the simulation */
+        void setGazebo(
+            std::string const& pluginName,
+            gz::sim::Entity const& entity,
+            sdf::ElementConstPtr const& sdf,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::EventManager& event_manager
+        ) override;
+
+        /**
+         * This method set the gazebo plugin task name
+         */
+        void setGazeboPluginTaskName(std::string const& plugin_task_name) override;
     };
 }
 

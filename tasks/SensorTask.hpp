@@ -7,6 +7,7 @@
 #include <string>
 
 #include "gz_rock/SensorTaskBase.hpp"
+#include "gz_rock/PluginTaskI.hpp"
 #include <gz/sim/System.hh>
 #include <gz/transport/Node.hh>
 
@@ -115,11 +116,12 @@ namespace gz_rock {
          */
         void cleanupHook();
 
-        virtual void setGazebo(
+        void setGazebo(
+            std::string const& plugin_name,
             gz::sim::Entity const& entity,
             std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
-            gz::sim::EventManager& event_manager);
+            gz::sim::EventManager& event_manager) override;
 
     protected:
         template <typename M, typename T>
