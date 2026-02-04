@@ -25,7 +25,7 @@ inline Eigen::Vector3d gz2Eigen(std::optional<gz::math::Vector3d> const& gz) {
 }
 
 inline Eigen::Quaterniond gz2Eigen(gz::math::Quaterniond const& gz) {
-    return Eigen::Quaterniond(gz.Z(), gz.X(), gz.Y(), gz.Z());
+    return Eigen::Quaterniond(gz.W(), gz.X(), gz.Y(), gz.Z());
 }
 
 inline Eigen::Quaterniond gz2Eigen(std::optional<gz::math::Quaterniond> const& gz) {
@@ -46,8 +46,8 @@ inline Eigen::Isometry3d gz2Eigen(gz::math::Pose3d const& gz) {
     Eigen::Quaterniond rot = gz2Eigen(gz.Rot());
     Eigen::Isometry3d pose;
     pose.setIdentity();
-    pose.rotate(rot);
     pose.translate(pos);
+    pose.rotate(rot);
     return pose;
 }
 
