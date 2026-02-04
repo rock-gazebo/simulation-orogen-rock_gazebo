@@ -218,15 +218,15 @@ void ModelTask::setupLinks()
         link_export_setup.push_back(exported_link);
     }
 
+    gzmsg << "ModelTask: link exports from model "
+          << scopedName(m_model, *m_ecm, "::") << ":\n";
     for (auto& export_setup : link_export_setup) {
-        // Create the ports dynamicaly
-        gzmsg << "ModelTask: exporting link " << " of model "
-              << scopedName(m_model, *m_ecm) << export_setup.source_link << "2"
-              << export_setup.target_link << " through wrench port "
-              << export_setup.wrench_port_name << ", " << "rbs port "
-              << export_setup.port_name << " and " << "rba port "
-              << export_setup.rba_port_name << " updated every "
-              << export_setup.port_period.toSeconds() << " seconds." << endl;
+        gzmsg << "  source=" << scopedName(export_setup.source_link_ptr, *m_ecm, "::") << endl;
+        gzmsg << "  target=" << scopedName(export_setup.target_link_ptr, *m_ecm, "::") << endl;
+        gzmsg << "    rbs port=" << export_setup.port_name << endl;
+        gzmsg << "    rba port=" << export_setup.rba_port_name << endl;
+        gzmsg << "    wrench port=" << export_setup.wrench_port_name << endl;
+        gzmsg << "    update period=" << export_setup.port_period.toSeconds() << endl;
 
         export_setup.wrench_port = new WrenchInPort(export_setup.wrench_port_name);
         export_setup.port = new RBSOutPort(export_setup.port_name);
@@ -581,23 +581,58 @@ void ModelTask::releaseLinks()
     link_export_setup.clear();
 }
 
+static list<string> splitScopedName(std::string const& scopedName) {
+    list<string> result;
+    string::size_type delim = scopedName.find("::"), current = 0;
+    while(delim != string::npos) {
+        result.push_back(scopedName.substr(current, delim));
+        current = delim + 2;
+        delim = scopedName.find("::", current);
+    }
+    result.push_back(scopedName.substr(current));
+    return result;
+}
+
+static Entity resolveLinkRecursive(Entity const& root, std::string const& scopedName, EntityComponentManager& ecm) {
+    auto names = splitScopedName(scopedName);
+
+    auto linkName = names.back();
+    names.pop_back();
+
+    auto context = root;
+    for (auto const& n: names) {
+        auto child = Model(context).ModelByName(ecm, n);
+        if (child == kNullEntity) {
+            throw std::invalid_argument(
+                "could not find child model " + n + " of " +
+                gz::sim::scopedName(context, ecm, "::")
+            );
+        }
+
+        context = child;
+    }
+
+    auto link = Model(context).LinkByName(ecm, linkName);
+    if (link == kNullEntity) {
+        throw std::invalid_argument(
+            "could not find child link " + linkName + " of " +
+            gz::sim::scopedName(context, ecm, "::")
+        );
+    }
+
+    return link;
+}
+
 pair<Entity, string> ModelTask::resolveSelectedLink(std::string const& key,
     std::string const& user_value)
 {
     auto default_value = _world_frame.get();
     auto value = optionOrDefault(key, user_value, default_value);
     if (value != default_value) {
-        auto ptr = Model(m_model).LinkByName(*m_ecm, value);
-        ;
-        if (ptr == kNullEntity) {
-            throwInvalidLinkNames(*m_ecm,
-                m_model,
-                "cannot find exported source link " + value);
-        }
-
-        Link(ptr).EnableAccelerationChecks(*m_ecm, true);
-        Link(ptr).EnableVelocityChecks(*m_ecm, true);
-        return make_pair(ptr, value);
+        auto link = resolveLinkRecursive(m_model, value, *m_ecm);
+        Link(link).EnableAccelerationChecks(*m_ecm, true);
+        Link(link).EnableVelocityChecks(*m_ecm, true);
+        return make_pair(link, value);
     }
 
     return make_pair(kNullEntity, value);
