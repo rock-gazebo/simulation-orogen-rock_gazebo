@@ -1,6 +1,7 @@
 #ifndef ROCK_GAZEBO_MODEL_PLUGIN_TASK_I_HPP
 #define ROCK_GAZEBO_MODEL_PLUGIN_TASK_I_HPP
 
+#include <base/Time.hpp>
 #include <gz/sim/System.hh>
 #include <sdf/Element.hh>
 #include <string>
@@ -12,6 +13,8 @@ namespace gz_rock {
      */
     struct PluginTaskI {
         virtual ~PluginTaskI() {}
+
+        virtual void setSimTime(base::Time const& time) = 0;
 
         virtual void setGazebo(
             std::string const& pluginName,
