@@ -15,6 +15,7 @@
 #include <gz/sim/World.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/Util.hh>
+#include <gz/sim/components/JointType.hh>
 #include <sdf/Joint.hh>
 #include <stdexcept>
 
@@ -90,11 +91,11 @@ void ModelTask::InternalJointExport::addJoint(Entity joint, std::string name)
 void ModelTask::setupJoints()
 {
     JointExportSetup exported_joints;
+    exported_joints.push_back(createAllJointsExport());
 
     auto model = Model(m_model);
 
     std::vector<JointExport> requested_exports = _exported_joints.get();
-
     for (auto const& export_request : requested_exports) {
         string prefix = export_request.prefix;
         size_t export_size = export_request.joints.size();
@@ -146,7 +147,38 @@ void ModelTask::setupJoints()
         exported_joints.push_back(export_setup);
     }
 
+    for (auto& export_setup: exported_joints) {
+        for (auto entity: export_setup.gazebo_joints) {
+            Joint j{entity};
+            j.EnablePositionCheck(*m_ecm);
+            j.EnableVelocityCheck(*m_ecm);
+        }
+    }
+
     this->joint_export_setup = exported_joints;
+}
+
+ModelTask::InternalJointExport ModelTask::createAllJointsExport() {
+    InternalJointExport all_joints;
+    all_joints.permanent = true;
+    all_joints.ignore_joint_names = _ignore_joint_names.get();
+    all_joints.in_port = &_joints_cmd;
+    all_joints.out_port = &_joints_samples;
+
+    m_ecm->Each<components::JointType, components::Name>(
+        [&](Entity const& entity, components::JointType const* joint_type, components::Name const* name) -> bool {
+            if (joint_type->Data() != sdf::JointType::FIXED) {
+                all_joints.addJoint(entity, name->Data());
+            }
+            return true;
+        }
+    );
+
+    all_joints.position_offsets.resize(
+        all_joints.gazebo_joints.size(), 0
+    );
+
+    return all_joints;
 }
 
 static void throwInvalidLinkNames(EntityComponentManager& ecm,

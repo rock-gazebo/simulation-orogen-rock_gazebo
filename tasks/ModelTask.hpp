@@ -29,7 +29,6 @@ namespace gz_rock {
             sdf::ElementPtr m_sdf;
 
             base::samples::Joints m_joints_in;
-            void setupJoints();
 
             typedef base::samples::Wrench Wrench;
             typedef base::samples::RigidBodyState RigidBodyState;
@@ -96,6 +95,12 @@ namespace gz_rock {
 
                 void addJoint(gz::sim::Entity joint, std::string name);
             };
+
+            /** Return the JointExport structure that exports all joints of the model
+             */
+            InternalJointExport createAllJointsExport();
+
+            void setupJoints();
 
             typedef std::vector<InternalJointExport> JointExportSetup;
             JointExportSetup joint_export_setup;
