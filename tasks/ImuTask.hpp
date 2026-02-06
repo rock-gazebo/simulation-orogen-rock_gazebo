@@ -7,6 +7,7 @@
 
 #include <base/samples/IMUSensors.hpp>
 #include <base/samples/RigidBodyState.hpp>
+#include <gz/math/Quaternion.hh>
 #include <gz/msgs/imu.pb.h>
 
 namespace gz_rock{
@@ -119,7 +120,7 @@ namespace gz_rock{
         ) override;
 
     private:
-        gz::math::Quaterniond m_initial_orientation;
+        gz::math::Quaterniond m_initial_orientation = gz::math::Quaterniond::Identity;
         base::samples::RigidBodyState orientation;
         base::samples::IMUSensors imuSensors;
     };

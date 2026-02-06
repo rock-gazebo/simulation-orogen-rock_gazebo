@@ -4,6 +4,8 @@
 
 #include <gz/math/CoordinateVector3.hh>
 #include <gz/sim/Link.hh>
+#include <gz/sim/Sensor.hh>
+#include <base-logging/Logging.hpp>
 #include <sdf/Element.hh>
 #include <sdf/World.hh>
 
@@ -73,7 +75,7 @@ bool GPSTask::configureHook()
     }
 
     GazeboSync sync(*this);
-    topicSubscribe(&GPSTask::readInput, m_base_topic_name + "/gps");
+    topicSubscribe(&GPSTask::readInput, m_base_topic_name);
     return true;
 }
 bool GPSTask::startHook()

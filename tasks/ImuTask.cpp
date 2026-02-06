@@ -1,8 +1,9 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "ImuTask.hpp"
+#include <base-logging/Logging.hpp>
 
-#include <gz/sim/Link.hh>
+#include <gz/sim/Sensor.hh>
 #include "Helpers.hpp"
 
 using namespace std;
@@ -38,8 +39,6 @@ void ImuTask::setGazebo(
     gz::sim::EventManager& event_manager
 ) {
     ImuTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
-
-    m_initial_orientation = gz::sim::Link(m_gazebo_link).WorldPose(ecm)->Rot();
 }
 
 /// The following lines are template definitions for the various state machine
@@ -58,7 +57,7 @@ bool ImuTask::configureHook()
     orientation.cov_angular_velocity = _cov_angular_velocity.value();
 
     GazeboSync sync(*this);
-    topicSubscribe(&ImuTask::readInput, m_base_topic_name + "/imu");
+    topicSubscribe(&ImuTask::readInput, m_base_topic_name);
     return true;
 }
 
@@ -103,7 +102,7 @@ void ImuTask::readInput(gz::msgs::IMU const& imuMsg) {
     orientation.angular_velocity = base::Vector3d(avel.x(), avel.y(), avel.z());
 
     imuSensors.time = stamp;
-    imuSensors.mag  = base::getEuler(orientation.orientation);
+    imuSensors.mag  = orientation.orientation * Eigen::Vector3d::UnitX();
     imuSensors.gyro = base::Vector3d(avel.x(), avel.y(), avel.z());
     imuSensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
 

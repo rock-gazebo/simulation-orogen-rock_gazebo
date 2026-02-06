@@ -34,9 +34,6 @@ namespace gz_rock {
     class SensorTask : public SensorTaskBase {
         friend class SensorTaskBase;
 
-    protected:
-        gz::sim::Entity m_sensor;
-
     public:
         /** TaskContext constructor for SensorTask
          * \param name Name of the task. This name needs to be unique to make it
@@ -132,13 +129,11 @@ namespace gz_rock {
             gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName
                   << std::endl;
         }
-
-        gz::sim::Entity m_gazebo_model;
-        gz::sim::Entity m_gazebo_link;
-        sdf::ElementConstPtr m_sdf;
         std::shared_ptr<gz::transport::Node> m_node;
-        std::mutex m_read_mutex;
-        std::string m_sensor_full_name;
+
+    protected:
+        gz::sim::Entity m_sensor_entity;
+        gz::sim::EntityComponentManager* m_ecm = nullptr;
         std::string m_base_topic_name;
     };
 }

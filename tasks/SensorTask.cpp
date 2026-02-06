@@ -6,8 +6,7 @@
 #include <gz/sim/System.hh>
 #include <gz/sim/Link.hh>
 #include <gz/sim/Util.hh>
-#include <gz/sim/components/World.hh>
-#include <gz/sim/components/Model.hh>
+#include <gz/sim/Sensor.hh>
 #include <sdf/sdf.hh>
 
 #include <base-logging/Logging.hpp>
@@ -47,6 +46,13 @@ bool SensorTask::configureHook()
     GazeboSync sync(*this);
     m_node.reset(new gz::transport::Node());
 
+    auto topic = gz::sim::Sensor(m_sensor_entity).Topic(*m_ecm);
+    if (!topic.has_value()) {
+        LOG_ERROR_S << "imu sensor " << scopedName(m_sensor_entity, *m_ecm) << " does not have a topic name";
+        return false;
+    }
+    m_base_topic_name = topic.value();
+
     return true;
 }
 bool SensorTask::startHook()
@@ -80,32 +86,15 @@ void SensorTask::setGazebo(
     gz::sim::EventManager& event_manager
 )
 {
-    auto world = findParentOfType(sensor, ecm, components::World::typeId);
-    if (!world.has_value()) {
-        throw std::runtime_error(
-            "expected the sensor parent's to be included in a world"
-        );
-    }
-
     SensorTaskBase::setGazebo(plugin_name, sensor, sdf, ecm, event_manager);
+    m_ecm = &ecm;
+    m_sensor_entity = sensor;
 
-    auto model = findParentOfType(sensor, ecm, components::Model::typeId);
-    if (!model.has_value()) {
-        throw std::runtime_error("expected the sensor parent's to be a model");
+    string taskName = "gazebo::" + scopedName(sensor, ecm, "::", false);
+    if (!provides()) {
+        throw std::runtime_error("SensorTask::provides returned NULL");
     }
 
-    sdf::ElementPtr sdfLink = sdf->GetParent();
-    m_sdf = sdf;
-    m_gazebo_link = Model(*model).LinkByName(ecm, sdfLink->Get<string>("name"));
-
-    m_sensor_full_name =
-        scopedName(m_gazebo_link, ecm, "::", true) + "::" + m_sdf->Get<string>("name");
-    m_base_topic_name =
-        "~/" + scopedName(m_gazebo_link, ecm, "/") + "/" + m_sdf->Get<string>("name");
-
-    string taskName = "gazebo::" + m_sensor_full_name;
-    if (!provides())
-        throw std::runtime_error("SensorTask::provides returned NULL");
     provides()->setName(taskName);
     _name.set(taskName);
 }
