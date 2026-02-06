@@ -219,10 +219,26 @@ void ModelTask::setupLinks()
         validateExportRequestPortName(used_names, export_request.port_name);
 
         InternalLinkExport exported_link;
+        exported_link.source_frame = export_request.source_frame;
         tie(exported_link.source_link_ptr, exported_link.source_link) =
             resolveSelectedLink("source_link", export_request.source_link);
+        if (exported_link.source_frame.empty()) {
+            exported_link.source_frame = export_request.source_link;
+        }
+
+        exported_link.target_frame = export_request.target_frame;
         tie(exported_link.target_link_ptr, exported_link.source_link) =
             resolveSelectedLink("target_link", export_request.target_link);
+        if (exported_link.target_frame.empty()) {
+            exported_link.target_frame = export_request.target_link;
+        }
+
+        exported_link.cov_position = export_request.cov_position;
+        exported_link.cov_velocity = export_request.cov_velocity;
+        exported_link.cov_acceleration = export_request.cov_acceleration;
+        exported_link.cov_orientation = export_request.cov_orientation;
+        exported_link.cov_angular_velocity = export_request.cov_angular_velocity;
+        exported_link.cov_angular_acceleration = export_request.cov_angular_acceleration;
 
         exported_link.port_name = export_request.port_name;
         exported_link.rba_port_name = export_request.port_name + "_acceleration";
