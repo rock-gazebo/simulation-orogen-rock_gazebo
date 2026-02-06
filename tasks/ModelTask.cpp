@@ -499,10 +499,10 @@ void ModelTask::updateLinks(base::Time const& time)
             world2target.rotation() * source2world_linv_in_world;
         Eigen::Vector3d source2world_angv_in_source =
             world2source.rotation() * source2world_angv_in_world;
-        Eigen::Vector3d source2world_linacc_in_target =
-            world2target.rotation() * source2world_linacc_in_world;
-        Eigen::Vector3d source2world_angacc_in_target =
-            world2target.rotation() * source2world_angacc_in_world;
+        Eigen::Vector3d source2world_linacc_in_source =
+            world2source.rotation() * source2world_linacc_in_world;
+        Eigen::Vector3d source2world_angacc_in_source =
+            world2source.rotation() * source2world_angacc_in_world;
 
         RigidBodyState rbs;
         rbs.sourceFrame = exported_link.source_frame;
@@ -520,8 +520,8 @@ void ModelTask::updateLinks(base::Time const& time)
 
         base::samples::RigidBodyAcceleration rba;
         rba.cov_acceleration = exported_link.cov_acceleration;
-        rba.acceleration = source2world_linacc_in_target;
-        rba.angular_acceleration = source2world_angacc_in_target;
+        rba.acceleration = source2world_linacc_in_source;
+        rba.angular_acceleration = source2world_angacc_in_source;
         rba.cov_angular_acceleration = exported_link.cov_angular_acceleration;
         rba.time = time;
         exported_link.rba_port->write(rba);
@@ -547,12 +547,11 @@ void ModelTask::updateLinks(base::Time const& time)
         Link link(exported_link.source_link_ptr);
         Eigen::Quaterniond source2world_q =
             gz2Eigen(link.WorldPose(*m_ecm).value().Rot());
-        Eigen::Quaterniond world2source_q = source2world_q.inverse();
 
         Eigen::Vector3d force_in_source = exported_link.wrench_in.force;
         Eigen::Vector3d torque_in_source = exported_link.wrench_in.torque;
-        Eigen::Vector3d force_in_world = world2source_q * force_in_source;
-        Eigen::Vector3d torque_in_world = world2source_q * torque_in_source;
+        Eigen::Vector3d force_in_world = source2world_q * force_in_source;
+        Eigen::Vector3d torque_in_world = source2world_q * torque_in_source;
 
         link.AddWorldWrench(*m_ecm, eigen2Gz(force_in_world), eigen2Gz(torque_in_world));
     }
