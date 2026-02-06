@@ -360,8 +360,17 @@ void ModelTask::writeExportedJointSamples(base::Time const& time,
         base::JointState& state = exported_joint.joints_out.elements[i];
         auto joint = Joint(exported_joint.gazebo_joints[i]);
 
-        state.speed = joint.Velocity(*m_ecm).value().at(0);
-        state.position = joint.Position(*m_ecm).value().at(0);
+        auto joint_velocity = joint.Velocity(*m_ecm).value();
+        auto joint_position = joint.Position(*m_ecm).value();
+
+        if (joint_velocity.empty() || joint_position.empty()) {
+            // There is a delay between initialization and first available speed/position
+            // sample
+            return;
+        }
+
+        state.speed = joint_velocity.at(0);
+        state.position = joint_position.at(0);
         state.position += exported_joint.position_offsets[i];
     }
     exported_joint.joints_out.time = time;
