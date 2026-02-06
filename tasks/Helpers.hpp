@@ -5,6 +5,9 @@
 #include <gz/math.hh>
 #include <gz/msgs/details/image.pb.h>
 #include <gz/msgs/image.pb.h>
+#include <gz/sim/EntityComponentManager.hh>
+#include <gz/sim/Model.hh>
+#include <gz/sim/Util.hh>
 #include <base/Float.hpp>
 #include <base/samples/Frame.hpp>
 
@@ -101,5 +104,77 @@ inline std::pair<int, base::samples::frame::frame_mode_t> gzToRock(
     }
 
 }
+
+inline std::list<std::string> splitScopedName(std::string const& scopedName) {
+    std::list<std::string> result;
+    std::string::size_type delim = scopedName.find("::"), current = 0;
+    while(delim != std::string::npos) {
+        result.push_back(scopedName.substr(current, delim));
+        current = delim + 2;
+        delim = scopedName.find("::", current);
+    }
+    result.push_back(scopedName.substr(current));
+    return result;
+}
+
+inline gz::sim::Entity resolveSubmodelRecursive(gz::sim::Entity const& root, std::list<std::string> const& names, gz::sim::EntityComponentManager& ecm) {
+    auto context = root;
+    for (auto const& n: names) {
+        auto child = gz::sim::Model(context).ModelByName(ecm, n);
+        if (child == gz::sim::kNullEntity) {
+            throw std::invalid_argument(
+                "could not find child model " + n + " of " +
+                gz::sim::scopedName(context, ecm, "::")
+            );
+        }
+
+        context = child;
+    }
+
+    return context;
+}
+
+inline gz::sim::Entity resolveJointRecursive(gz::sim::Entity const& root, std::string const& scopedName, gz::sim::EntityComponentManager& ecm) {
+    auto names = splitScopedName(scopedName);
+
+    auto jointName = names.back();
+    names.pop_back();
+
+    if (gz::sim::Model(root).Name(ecm) == names.front()) {
+        names.pop_front();
+    }
+
+    auto submodel = resolveSubmodelRecursive(root, names, ecm);
+
+    auto joint = gz::sim::Model(submodel).JointByName(ecm, jointName);
+    if (joint == gz::sim::kNullEntity) {
+        throw std::invalid_argument(
+            "could not find child joint " + jointName + " of " +
+            gz::sim::scopedName(submodel, ecm, "::")
+        );
+    }
+
+    return joint;
+}
+
+inline gz::sim::Entity resolveLinkRecursive(gz::sim::Entity const& root, std::string const& scopedName, gz::sim::EntityComponentManager& ecm) {
+    auto names = splitScopedName(scopedName);
+
+    auto linkName = names.back();
+    names.pop_back();
+
+    auto submodel = resolveSubmodelRecursive(root, names, ecm);
+
+    auto link = gz::sim::Model(submodel).LinkByName(ecm, linkName);
+    if (link == gz::sim::kNullEntity) {
+        throw std::invalid_argument(
+            "could not find child link " + linkName + " of " +
+            gz::sim::scopedName(submodel, ecm, "::")
+        );
+    }
+
+    return link;
+}
+
 
 #endif

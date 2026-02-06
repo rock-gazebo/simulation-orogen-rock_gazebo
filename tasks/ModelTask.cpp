@@ -16,6 +16,8 @@
 #include <gz/sim/System.hh>
 #include <gz/sim/Util.hh>
 #include <gz/sim/components/JointType.hh>
+#include <gz/sim/components/ParentEntity.hh>
+#include <gz/sim/components/Model.hh>
 #include <sdf/Joint.hh>
 #include <stdexcept>
 
@@ -117,7 +119,7 @@ void ModelTask::setupJoints()
             }
             string joint_name = gz_joint_name.substr(prefix.size(), std::string::npos);
 
-            auto gz_joint = model.JointByName(*m_ecm, gz_joint_name);
+            auto gz_joint = resolveJointRecursive(m_model, gz_joint_name, *m_ecm);
             if (gz_joint == kNullEntity) {
                 throw std::invalid_argument("ModelTask: cannot find joint " +
                                             gz_joint_name + " requested in export");
@@ -158,6 +160,19 @@ void ModelTask::setupJoints()
     this->joint_export_setup = exported_joints;
 }
 
+string jointName(Entity entity, EntityComponentManager& ecm) {
+    string name;
+
+    do {
+        auto entity_name = ecm.ComponentData<components::Name>(entity).value();
+        name = entity_name + "::" + name;
+        entity = ecm.ComponentData<components::ParentEntity>(entity).value();
+    }
+    while (ecm.EntityHasComponentType(entity, components::Model::typeId));
+
+    return name.substr(0, name.size() - 2);
+}
+
 ModelTask::InternalJointExport ModelTask::createAllJointsExport() {
     InternalJointExport all_joints;
     all_joints.permanent = true;
@@ -165,10 +180,10 @@ ModelTask::InternalJointExport ModelTask::createAllJointsExport() {
     all_joints.in_port = &_joints_cmd;
     all_joints.out_port = &_joints_samples;
 
-    m_ecm->Each<components::JointType, components::Name>(
-        [&](Entity const& entity, components::JointType const* joint_type, components::Name const* name) -> bool {
+    m_ecm->Each<components::JointType>(
+        [&](Entity const& entity, components::JointType const* joint_type) -> bool {
             if (joint_type->Data() != sdf::JointType::FIXED) {
-                all_joints.addJoint(entity, name->Data());
+                all_joints.addJoint(entity, jointName(entity, *m_ecm));
             }
             return true;
         }
@@ -579,48 +594,6 @@ void ModelTask::releaseLinks()
         }
     }
     link_export_setup.clear();
-}
-
-static list<string> splitScopedName(std::string const& scopedName) {
-    list<string> result;
-    string::size_type delim = scopedName.find("::"), current = 0;
-    while(delim != string::npos) {
-        result.push_back(scopedName.substr(current, delim));
-        current = delim + 2;
-        delim = scopedName.find("::", current);
-    }
-    result.push_back(scopedName.substr(current));
-    return result;
-}
-
-static Entity resolveLinkRecursive(Entity const& root, std::string const& scopedName, EntityComponentManager& ecm) {
-    auto names = splitScopedName(scopedName);
-
-    auto linkName = names.back();
-    names.pop_back();
-
-    auto context = root;
-    for (auto const& n: names) {
-        auto child = Model(context).ModelByName(ecm, n);
-        if (child == kNullEntity) {
-            throw std::invalid_argument(
-                "could not find child model " + n + " of " +
-                gz::sim::scopedName(context, ecm, "::")
-            );
-        }
-
-        context = child;
-    }
-
-    auto link = Model(context).LinkByName(ecm, linkName);
-    if (link == kNullEntity) {
-        throw std::invalid_argument(
-            "could not find child link " + linkName + " of " +
-            gz::sim::scopedName(context, ecm, "::")
-        );
-    }
-
-    return link;
 }
 
 pair<Entity, string> ModelTask::resolveSelectedLink(std::string const& key,
