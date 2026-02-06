@@ -3,6 +3,7 @@
 #include "ImuTask.hpp"
 
 #include <gz/sim/Link.hh>
+#include "Helpers.hpp"
 
 using namespace std;
 using namespace gz_rock;
@@ -56,6 +57,7 @@ bool ImuTask::configureHook()
     orientation.cov_orientation = _cov_orientation.value();
     orientation.cov_angular_velocity = _cov_angular_velocity.value();
 
+    GazeboSync sync(*this);
     topicSubscribe(&ImuTask::readInput, m_base_topic_name + "/imu");
     return true;
 }

@@ -11,6 +11,9 @@
 #include <base/Float.hpp>
 #include <base/samples/Frame.hpp>
 
+#include <gz_rock/BaseTask.hpp>
+
+namespace gz_rock {
 inline Eigen::Vector3d gz2Eigen(gz::math::Vector3d const& gz) {
     return Eigen::Vector3d(gz.X(), gz.Y(), gz.Z());
 }
@@ -176,5 +179,28 @@ inline gz::sim::Entity resolveLinkRecursive(gz::sim::Entity const& root, std::st
     return link;
 }
 
+/** Ensure that a block of code is executed while Gazebo's main thread is blocked
+ *
+ * RTT's configureHook is called within the thread of the communication medium
+ * (e.g. CORBA). This causes problems when modifying the Gazebo internal state
+ *
+ * This structure handles synchronization so that we wait for the task's plugin
+ * to be in the update step, block gazebo's execution during the object's
+ * lifetime and then release at the end
+ *
+ * It can be taken recursively, but only in a single thread
+ */
+struct GazeboSync {
+    BaseTask& m_task;
+    GazeboSync(BaseTask& task)
+        : m_task(task) {
+        m_task.enterGazeboCriticalZone();
+    }
+
+    ~GazeboSync() {
+        m_task.leaveGazeboCriticalZone();
+    }
+};
+}
 
 #endif

@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "LaserScanTask.hpp"
+#include "Helpers.hpp"
 
 using namespace std;
 using namespace gz_rock;
@@ -34,6 +35,7 @@ bool LaserScanTask::configureHook()
     m_depth_map.vertical_interval.resize(2);
     m_depth_map.timestamps.resize(1);
 
+    GazeboSync sync(*this);
     topicSubscribe(&LaserScanTask::readInput, m_base_topic_name + "/scan");
     return true;
 }

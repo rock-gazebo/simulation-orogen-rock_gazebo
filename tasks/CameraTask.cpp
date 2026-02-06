@@ -34,6 +34,7 @@ bool CameraTask::configureHook()
     if (! CameraTaskBase::configureHook())
         return false;
 
+    GazeboSync sync(*this);
     topicSubscribe(&CameraTask::readInput, m_base_topic_name + "/image");
     return true;
 }

@@ -27,6 +27,8 @@ namespace gz_rock {
         virtual void setGazeboPluginTaskName(
             std::string const& pluginTaskName
         ) = 0;
+
+        virtual void gazeboCriticalZone() = 0;
     };
 }
 

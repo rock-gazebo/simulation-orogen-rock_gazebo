@@ -5,13 +5,14 @@
 #include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/World.hh>
-#include <stdexcept>
+#include <mutex>
 #include <regex>
 
 using namespace gz_rock;
 using namespace gz;
 using namespace gz::sim;
 using namespace gz::sim::systems;
+using namespace std;
 
 BaseTask::BaseTask(std::string const& name)
     : BaseTaskBase(name)
@@ -39,8 +40,8 @@ base::Time BaseTask::getSimTime() const
 
 base::Time BaseTask::getCurrentTime(gz::msgs::Time const& sim_timestamp) const
 {
-    return getCurrentTime(base::Time::fromSeconds(sim_timestamp.sec())+
-            base::Time::fromMicroseconds(sim_timestamp.nsec() / 1000));
+    return getCurrentTime(base::Time::fromSeconds(sim_timestamp.sec()) +
+                          base::Time::fromMicroseconds(sim_timestamp.nsec() / 1000));
 }
 
 base::Time BaseTask::getCurrentTime(base::Time sim_timestamp) const
@@ -59,21 +60,20 @@ base::Time BaseTask::getCurrentTime() const
         return base::Time::now();
 }
 
-
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See BaseTask.hpp for more detailed
 // documentation about them.
 
 bool BaseTask::configureHook()
 {
-    if (! BaseTaskBase::configureHook())
+    if (!BaseTaskBase::configureHook())
         return false;
 
     return true;
 }
 bool BaseTask::startHook()
 {
-    if (! BaseTaskBase::startHook())
+    if (!BaseTaskBase::startHook())
         return false;
     return true;
 }
@@ -94,10 +94,10 @@ void BaseTask::cleanupHook()
     BaseTaskBase::cleanupHook();
 }
 
-std::optional<gz::sim::Entity> BaseTask::findParentOfType(
-    gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
-    ComponentTypeId const& typeId
-) {
+std::optional<gz::sim::Entity> BaseTask::findParentOfType(gz::sim::Entity entity,
+    gz::sim::EntityComponentManager& ecm,
+    ComponentTypeId const& typeId)
+{
     auto search = entity;
     while (!ecm.EntityHasComponentType(search, typeId)) {
         search = ecm.ParentEntity(search);
@@ -113,18 +113,50 @@ std::string BaseTask::getNamespaceFromPluginName(std::string const& plugin_name)
     return std::regex_replace(plugin_name, std::regex("__"), "/");
 }
 
-void BaseTask::setGazebo(
-    std::string const& pluginName,
+void BaseTask::setGazebo(std::string const& pluginName,
     gz::sim::Entity const& entity,
     sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
-    gz::sim::EventManager& event_manager
-) {
+    gz::sim::EventManager& event_manager)
+{
 }
-
 
 void BaseTask::setGazeboPluginTaskName(std::string const& plugin_task_name)
 {
     provides()->setName(plugin_task_name);
     _name.set(plugin_task_name);
+}
+
+void BaseTask::gazeboCriticalZone()
+{
+    unique_lock<mutex> guard(m_gazebo_critical_mutex);
+
+    m_gazebo_critical_zone = true;
+
+    while (m_gazebo_critical_zone_request) {
+        m_gazebo_critical_signal.notify_one();
+        m_gazebo_critical_signal.wait(guard);
+    }
+
+    m_gazebo_critical_zone = false;
+}
+
+void BaseTask::enterGazeboCriticalZone()
+{
+    unique_lock<mutex> guard(m_gazebo_critical_mutex);
+
+    while (m_gazebo_critical_zone_request) {
+        m_gazebo_critical_signal.wait(guard);
+    }
+
+    m_gazebo_critical_zone_request = true;
+    while (!m_gazebo_critical_zone) {
+        m_gazebo_critical_signal.wait(guard);
+    }
+}
+
+void BaseTask::leaveGazeboCriticalZone()
+{
+    m_gazebo_critical_zone_request = false;
+    m_gazebo_critical_signal.notify_one();
 }

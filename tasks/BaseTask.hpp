@@ -6,6 +6,7 @@
 #include "gz_rock/BaseTaskBase.hpp"
 #include "gz_rock/PluginTaskI.hpp"
 
+#include <condition_variable>
 #include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/components/Name.hh>
@@ -35,10 +36,28 @@ namespace gz_rock {
     protected:
         base::Time m_sim_time;
 
+        bool m_gazebo_critical_zone_request = false;
+        bool m_gazebo_critical_zone = false;
+        std::mutex m_gazebo_critical_mutex;
+        std::condition_variable m_gazebo_critical_signal;
+
     public:
+        /** Called by the gazebo plugin to allow other threads to synchronize with it */
+        void gazeboCriticalZone() override;
+
+        /** Called by other threads to enter a block of code that should be executed
+         * only with the gazebo thread "stopped"
+         */
+        void enterGazeboCriticalZone();
+
+        /** Called by other threads to exit a block of code that should be executed
+         * only with the gazebo thread "stopped"
+         */
+        void leaveGazeboCriticalZone();
+
         /** Hook for the gz_rock system plugin to announce the simulation time
          */
-        void setSimTime(base::Time const& time);
+        void setSimTime(base::Time const& time) override;
 
         /** Returns the simulated time */
         base::Time getSimTime() const;

@@ -7,6 +7,8 @@
 #include <sdf/Element.hh>
 #include <sdf/World.hh>
 
+#include "Helpers.hpp"
+
 using namespace std;
 using namespace gz_rock;
 using gz::math::CoordinateVector3;
@@ -70,6 +72,7 @@ bool GPSTask::configureHook()
         return false;
     }
 
+    GazeboSync sync(*this);
     topicSubscribe(&GPSTask::readInput, m_base_topic_name + "/gps");
     return true;
 }

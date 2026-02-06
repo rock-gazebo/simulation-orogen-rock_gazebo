@@ -561,6 +561,8 @@ bool ModelTask::configureHook()
         return false;
     }
 
+    GazeboSync sync(*this);
+
     // Test if setGazeboModel() has been called -> if world/model are NULL
     if (m_model == kNullEntity) {
         throw std::logic_error(

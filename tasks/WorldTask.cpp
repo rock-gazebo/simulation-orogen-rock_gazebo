@@ -2,6 +2,7 @@
 
 #include "WorldTask.hpp"
 #include <gz/sim/World.hh>
+#include "Helpers.hpp"
 
 using namespace gz_rock;
 using namespace gz::sim;

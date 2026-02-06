@@ -11,6 +11,7 @@
 #include <sdf/sdf.hh>
 
 #include <base-logging/Logging.hpp>
+#include "Helpers.hpp"
 
 using namespace gz_rock;
 using namespace std;
@@ -43,6 +44,7 @@ bool SensorTask::configureHook()
         return false;
 
     // Initialize communication node and subscribe to gazebo topic
+    GazeboSync sync(*this);
     m_node.reset(new gz::transport::Node());
 
     return true;
