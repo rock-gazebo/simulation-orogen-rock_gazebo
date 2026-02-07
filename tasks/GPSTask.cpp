@@ -46,25 +46,6 @@ void GPSTask::setGazebo(
 )
 {
     GPSTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
-    sdf::ElementConstPtr gps = sdf->FindElement("gps");
-
-    sdf::ElementConstPtr h_noise = gps
-        ->FindElement("position_sensing")
-        ->FindElement("horizontal")
-        ->FindElement("noise");
-    deviationHorizontal = 1;
-    if (h_noise->HasElement("stddev")) {
-        deviationHorizontal = h_noise->Get<double>("stddev");
-    }
-
-    sdf::ElementConstPtr v_noise = gps
-        ->FindElement("position_sensing")
-        ->FindElement("vertical")
-        ->FindElement("noise");
-    deviationVertical = 1;
-    if (v_noise->HasElement("stddev")) {
-        deviationVertical = v_noise->Get<double>("stddev");
-    }
 }
 
 
@@ -73,6 +54,9 @@ bool GPSTask::configureHook()
     if (! GPSTaskBase::configureHook()) {
         return false;
     }
+
+    m_deviation_horizontal = _deviation_horizontal.get();
+    m_deviation_vertical = _deviation_vertical.get();
 
     GazeboSync sync(*this);
     topicSubscribe(&GPSTask::readInput, m_base_topic_name);
@@ -121,7 +105,7 @@ void GPSTask::cleanupHook()
     GPSTaskBase::cleanupHook();
 }
 
-void GPSTask::readInput(gz::msgs::GPS const& msg) {
+void GPSTask::readInput(gz::msgs::NavSat const& msg) {
     if (state() != RUNNING) {
         return;
     }
@@ -134,13 +118,12 @@ void GPSTask::readInput(gz::msgs::GPS const& msg) {
     solution.noOfSatellites = 5;
     solution.geoidalSeparation = base::unknown<double>();
     solution.ageOfDifferentialCorrections = 0;
-    solution.deviationAltitude = deviationVertical;
-    solution.deviationLatitude = deviationHorizontal;
-    solution.deviationLongitude = deviationHorizontal;
-
+    solution.deviationAltitude = m_deviation_vertical;
+    solution.deviationLatitude = m_deviation_horizontal;
+    solution.deviationLongitude = m_deviation_horizontal;
     _gps_solution.write(solution);
-    base::samples::RigidBodyState utm, position;
 
+    base::samples::RigidBodyState utm, position;
     if (_use_proper_utm_conversion.get())
     {
         utm = utm_converter.convertToUTM(solution);
@@ -148,8 +131,7 @@ void GPSTask::readInput(gz::msgs::GPS const& msg) {
     }
     else
     {
-        CoordinateVector3 global;
-        global.Spherical(
+        auto global = CoordinateVector3::Spherical(
             GzAngle(solution.latitude * M_PI / 180),
             GzAngle(solution.longitude * M_PI / 180),
             solution.altitude

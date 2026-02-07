@@ -10,6 +10,7 @@
 #include <sdf/sdf.hh>
 
 #include <base-logging/Logging.hpp>
+#include <thread>
 #include "Helpers.hpp"
 
 using namespace gz_rock;
@@ -43,10 +44,22 @@ bool SensorTask::configureHook()
         return false;
 
     // Initialize communication node and subscribe to gazebo topic
-    GazeboSync sync(*this);
-    m_node.reset(new gz::transport::Node());
+    optional<string> topic;
+    {
+        GazeboSync sync(*this);
+        m_node.reset(new gz::transport::Node());
+        topic = gz::sim::Sensor(m_sensor_entity).Topic(*m_ecm);
+    }
 
-    auto topic = gz::sim::Sensor(m_sensor_entity).Topic(*m_ecm);
+    base::Time deadline = base::Time::now() + base::Time::fromSeconds(5);
+    while (!topic.has_value() && base::Time::now() < deadline)
+    {
+        this_thread::sleep_for(chrono::milliseconds(100));
+
+        GazeboSync sync(*this);
+        topic = gz::sim::Sensor(m_sensor_entity).Topic(*m_ecm);
+    }
+
     if (!topic.has_value()) {
         LOG_ERROR_S << "imu sensor " << scopedName(m_sensor_entity, *m_ecm) << " does not have a topic name";
         return false;

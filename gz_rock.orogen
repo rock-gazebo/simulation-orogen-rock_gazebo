@@ -178,4 +178,10 @@ task_context 'GPSTask', subclasses: 'SensorTask' do
 
     # Longitude of the origin if use_proper_utm_conversion is false
     property('longitude_origin', '/base/Angle')
+
+    # Horizontal deviation to be reported
+    property("deviation_horizontal", "/double", 5)
+
+    # Horizontal deviation to be reported
+    property("deviation_vertical", "/double", 5)
 end

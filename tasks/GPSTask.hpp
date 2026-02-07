@@ -7,8 +7,10 @@
 #include <gps_base/BaseTypes.hpp>
 #include <gps_base/UTMConverter.hpp>
 
-#include <gz/msgs/gps.pb.h>
+#include <gz/msgs/navsat.pb.h>
 #include <gz/math/SphericalCoordinates.hh>
+
+#include <base/Float.hpp>
 
 namespace gz_rock{
 
@@ -50,8 +52,10 @@ namespace gz_rock{
         gps_base::Solution solution;
         gz::math::SphericalCoordinates gazeboSpherical;
 
+        double m_deviation_vertical = base::unknown<double>();
+        double m_deviation_horizontal = base::unknown<double>();
     protected:
-        void readInput(gz::msgs::GPS const& msg);
+        void readInput(gz::msgs::NavSat const& msg);
 
     public:
         /** TaskContext constructor for GPSTask
