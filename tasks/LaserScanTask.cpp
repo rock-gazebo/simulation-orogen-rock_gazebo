@@ -36,7 +36,7 @@ bool LaserScanTask::configureHook()
     m_depth_map.timestamps.resize(1);
 
     GazeboSync sync(*this);
-    topicSubscribe(&LaserScanTask::readInput, m_base_topic_name + "/scan");
+    topicSubscribe(&LaserScanTask::readInput, m_base_topic_name);
     return true;
 }
 
@@ -108,7 +108,10 @@ void LaserScanTask::outputLaserScan(gz::msgs::LaserScan const& gz_scan)
             scan.ranges[i] = meters_to_milimeters(range);
         }
     }
-    _laser_scan_samples.write(scan);
+
+    sensor_stop_guard([&]{
+        _laser_scan_samples.write(scan);
+    });
 }
 
 void LaserScanTask::outputDepthMap(gz::msgs::LaserScan const& scan)
@@ -126,5 +129,8 @@ void LaserScanTask::outputDepthMap(gz::msgs::LaserScan const& scan)
     for (unsigned int i = 0; i < scan_size; ++i) {
         m_depth_map.distances[i] = scan.ranges(i);
     }
-    _depth_map_samples.write(m_depth_map);
+
+    sensor_stop_guard([&]{
+        _depth_map_samples.write(m_depth_map);
+    });
 }
