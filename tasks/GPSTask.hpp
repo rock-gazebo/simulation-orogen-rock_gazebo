@@ -7,12 +7,12 @@
 #include <gps_base/BaseTypes.hpp>
 #include <gps_base/UTMConverter.hpp>
 
-#include <gz/msgs/navsat.pb.h>
 #include <gz/math/SphericalCoordinates.hh>
+#include <gz/msgs/navsat.pb.h>
 
 #include <base/Float.hpp>
 
-namespace gz_rock{
+namespace gz_rock {
 
     /*! \class GPSTask
      * \brief The task context provides and requires services. It uses an
@@ -32,8 +32,7 @@ namespace gz_rock{
      * It can be dynamically adapted when the deployment is called with a
      * prefix argument.
      */
-    class GPSTask : public GPSTaskBase
-    {
+    class GPSTask : public GPSTaskBase {
         friend class GPSTaskBase;
         typedef gz::sim::Entity ModelPtr;
 
@@ -41,19 +40,18 @@ namespace gz_rock{
         gps_base::UTMConverter utm_converter;
         double deviationHorizontal;
         double deviationVertical;
-        void setGazebo(
-            std::string const& pluginName,
+        void setGazebo(std::string const& pluginName,
             gz::sim::Entity const& entity,
             sdf::ElementConstPtr const& sdf,
             gz::sim::EntityComponentManager& ecm,
-            gz::sim::EventManager& event_manager
-        ) override;
+            gz::sim::EventManager& event_manager) override;
 
         gps_base::Solution solution;
         gz::math::SphericalCoordinates gazeboSpherical;
 
         double m_deviation_vertical = base::unknown<double>();
         double m_deviation_horizontal = base::unknown<double>();
+
     protected:
         void readInput(gz::msgs::NavSat const& msg);
 
@@ -142,4 +140,3 @@ namespace gz_rock{
 }
 
 #endif
-

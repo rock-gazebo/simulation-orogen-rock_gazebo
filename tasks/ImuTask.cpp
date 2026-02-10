@@ -3,8 +3,8 @@
 #include "ImuTask.hpp"
 #include <base-logging/Logging.hpp>
 
-#include <gz/sim/Sensor.hh>
 #include "Helpers.hpp"
+#include <gz/sim/Sensor.hh>
 
 using namespace std;
 using namespace gz_rock;
@@ -31,13 +31,12 @@ ImuTask::~ImuTask()
 {
 }
 
-void ImuTask::setGazebo(
-    std::string const& pluginName,
+void ImuTask::setGazebo(std::string const& pluginName,
     gz::sim::Entity const& entity,
     sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
-    gz::sim::EventManager& event_manager
-) {
+    gz::sim::EventManager& event_manager)
+{
     ImuTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
 }
 
@@ -47,7 +46,7 @@ void ImuTask::setGazebo(
 
 bool ImuTask::configureHook()
 {
-    if (! ImuTaskBase::configureHook()) {
+    if (!ImuTaskBase::configureHook()) {
         return false;
     }
 
@@ -63,7 +62,7 @@ bool ImuTask::configureHook()
 
 bool ImuTask::startHook()
 {
-    if (! ImuTaskBase::startHook()) {
+    if (!ImuTaskBase::startHook()) {
         return false;
     }
     return true;
@@ -85,28 +84,28 @@ void ImuTask::cleanupHook()
     ImuTaskBase::cleanupHook();
 }
 
-void ImuTask::readInput(gz::msgs::IMU const& imuMsg) {
+void ImuTask::readInput(gz::msgs::IMU const& imuMsg)
+{
     if (state() != RUNNING) {
         return;
     }
 
-    const gz::msgs::Quaternion &quat = imuMsg.orientation();
+    const gz::msgs::Quaternion& quat = imuMsg.orientation();
     const gz::msgs::Vector3d& avel = imuMsg.angular_velocity();
-    const gz::msgs::Vector3d& linacc =  imuMsg.linear_acceleration();
+    const gz::msgs::Vector3d& linacc = imuMsg.linear_acceleration();
 
     base::Time stamp = getCurrentTime(imuMsg.header().stamp());
 
     orientation.time = stamp;
-    orientation.orientation =
-        base::Orientation(quat.w(), quat.x(), quat.y(), quat.z());
+    orientation.orientation = base::Orientation(quat.w(), quat.x(), quat.y(), quat.z());
     orientation.angular_velocity = base::Vector3d(avel.x(), avel.y(), avel.z());
 
     imuSensors.time = stamp;
-    imuSensors.mag  = orientation.orientation * Eigen::Vector3d::UnitX();
+    imuSensors.mag = orientation.orientation * Eigen::Vector3d::UnitX();
     imuSensors.gyro = base::Vector3d(avel.x(), avel.y(), avel.z());
-    imuSensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
+    imuSensors.acc = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
 
-    sensor_stop_guard([&]{
+    sensor_stop_guard([&] {
         _orientation_samples.write(orientation);
         _imu_samples.write(imuSensors);
     });

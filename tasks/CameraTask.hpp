@@ -3,30 +3,31 @@
 #ifndef ROCK_GAZEBO_CAMERATASK_TASK_HPP
 #define ROCK_GAZEBO_CAMERATASK_TASK_HPP
 
+#include <gz/msgs/image.pb.h>
 #include <gz/sim/System.hh>
 #include <gz/transport.hh>
-#include <gz/msgs/image.pb.h>
 
 #include "gz_rock/CameraTaskBase.hpp"
 
-namespace gz_rock{
+namespace gz_rock {
 
-    class CameraTask : public CameraTaskBase
-    {
-	friend class CameraTaskBase;
+    class CameraTask : public CameraTaskBase {
+        friend class CameraTaskBase;
+
     protected:
-
-
     public:
         /** TaskContext constructor for CameraTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable via nameservices. \param initial_state The initial TaskState of
+         * the TaskContext. Default is Stopped state.
          */
         CameraTask(std::string const& name = "gz_rock::CameraTask");
 
         /** TaskContext constructor for CameraTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable for nameservices. \param engine The RTT Execution engine to be
+         * used for this task, which serialises the execution of all commands, programs,
+         * state machines and incoming events for a task.
          *
          */
         CameraTask(std::string const& name, RTT::ExecutionEngine* engine);
@@ -100,4 +101,3 @@ namespace gz_rock{
 }
 
 #endif
-

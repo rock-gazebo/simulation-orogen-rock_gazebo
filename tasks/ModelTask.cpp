@@ -12,12 +12,12 @@
 #include <gz/sim/Joint.hh>
 #include <gz/sim/Link.hh>
 #include <gz/sim/Model.hh>
-#include <gz/sim/World.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/Util.hh>
+#include <gz/sim/World.hh>
 #include <gz/sim/components/JointType.hh>
-#include <gz/sim/components/ParentEntity.hh>
 #include <gz/sim/components/Model.hh>
+#include <gz/sim/components/ParentEntity.hh>
 #include <sdf/Joint.hh>
 #include <stdexcept>
 
@@ -50,13 +50,12 @@ ModelTask::~ModelTask()
     releaseLinks();
 }
 
-void ModelTask::setGazebo(
-    std::string const& plugin_name,
+void ModelTask::setGazebo(std::string const& plugin_name,
     gz::sim::Entity const& model_entity,
     sdf::ElementConstPtr const& model_sdf,
     gz::sim::EntityComponentManager& ecm,
-    gz::sim::EventManager& event_manager
-) {
+    gz::sim::EventManager& event_manager)
+{
     m_model = model_entity;
     m_ecm = &ecm;
 
@@ -149,8 +148,8 @@ void ModelTask::setupJoints()
         exported_joints.push_back(export_setup);
     }
 
-    for (auto& export_setup: exported_joints) {
-        for (auto entity: export_setup.gazebo_joints) {
+    for (auto& export_setup : exported_joints) {
+        for (auto entity : export_setup.gazebo_joints) {
             Joint j{entity};
             j.EnablePositionCheck(*m_ecm);
             j.EnableVelocityCheck(*m_ecm);
@@ -160,20 +159,21 @@ void ModelTask::setupJoints()
     this->joint_export_setup = exported_joints;
 }
 
-string jointName(Entity entity, EntityComponentManager& ecm) {
+string jointName(Entity entity, EntityComponentManager& ecm)
+{
     string name;
 
     do {
         auto entity_name = ecm.ComponentData<components::Name>(entity).value();
         name = entity_name + "::" + name;
         entity = ecm.ComponentData<components::ParentEntity>(entity).value();
-    }
-    while (ecm.EntityHasComponentType(entity, components::Model::typeId));
+    } while (ecm.EntityHasComponentType(entity, components::Model::typeId));
 
     return name.substr(0, name.size() - 2);
 }
 
-ModelTask::InternalJointExport ModelTask::createAllJointsExport() {
+ModelTask::InternalJointExport ModelTask::createAllJointsExport()
+{
     InternalJointExport all_joints;
     all_joints.permanent = true;
     all_joints.ignore_joint_names = _ignore_joint_names.get();
@@ -186,12 +186,9 @@ ModelTask::InternalJointExport ModelTask::createAllJointsExport() {
                 all_joints.addJoint(entity, jointName(entity, *m_ecm));
             }
             return true;
-        }
-    );
+        });
 
-    all_joints.position_offsets.resize(
-        all_joints.gazebo_joints.size(), 0
-    );
+    all_joints.position_offsets.resize(all_joints.gazebo_joints.size(), 0);
 
     return all_joints;
 }
@@ -249,11 +246,13 @@ void ModelTask::setupLinks()
         link_export_setup.push_back(exported_link);
     }
 
-    gzmsg << "ModelTask: link exports from model "
-          << scopedName(m_model, *m_ecm, "::") << ":\n";
+    gzmsg << "ModelTask: link exports from model " << scopedName(m_model, *m_ecm, "::")
+          << ":\n";
     for (auto& export_setup : link_export_setup) {
-        gzmsg << "  source=" << scopedName(export_setup.source_link_ptr, *m_ecm, "::") << endl;
-        gzmsg << "  target=" << scopedName(export_setup.target_link_ptr, *m_ecm, "::") << endl;
+        gzmsg << "  source=" << scopedName(export_setup.source_link_ptr, *m_ecm, "::")
+              << endl;
+        gzmsg << "  target=" << scopedName(export_setup.target_link_ptr, *m_ecm, "::")
+              << endl;
         gzmsg << "    rbs port=" << export_setup.port_name << endl;
         gzmsg << "    rba port=" << export_setup.rba_port_name << endl;
         gzmsg << "    wrench port=" << export_setup.wrench_port_name << endl;
@@ -328,9 +327,8 @@ void ModelTask::updateModelPose(base::Time const& time)
     rbs.time = time;
     rbs.sourceFrame = _model_frame.get();
     rbs.targetFrame = _world_frame.get();
-    rbs.position = base::Vector3d(model2world_pos.X(),
-        model2world_pos.Y(),
-        model2world_pos.Z());
+    rbs.position =
+        base::Vector3d(model2world_pos.X(), model2world_pos.Y(), model2world_pos.Z());
     rbs.cov_position = _cov_position.get();
     rbs.orientation = base::Quaterniond(model2world_rot.W(),
         model2world_rot.X(),

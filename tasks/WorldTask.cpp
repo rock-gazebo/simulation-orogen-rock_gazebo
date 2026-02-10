@@ -2,7 +2,6 @@
 
 #include "WorldTask.hpp"
 #include <gz/sim/World.hh>
-#include "Helpers.hpp"
 
 using namespace gz_rock;
 using namespace gz::sim;
@@ -21,12 +20,11 @@ WorldTask::~WorldTask()
 {
 }
 
-void WorldTask::setGazebo(
-    Entity const& worldEntity,
+void WorldTask::setGazebo(Entity const& worldEntity,
     std::shared_ptr<const sdf::Element> const& sdf,
     EntityComponentManager& ecm,
-    EventManager& event_manager
-) {
+    EventManager& event_manager)
+{
     m_world = worldEntity;
     m_ecm = &ecm;
 
@@ -34,7 +32,8 @@ void WorldTask::setGazebo(
     _name.set(getWorldName());
 }
 
-void WorldTask::setSimTime(base::Time const& time) {
+void WorldTask::setSimTime(base::Time const& time)
+{
     m_sim_time = time;
 }
 
@@ -49,13 +48,13 @@ std::string WorldTask::getWorldName() const
 
 bool WorldTask::configureHook()
 {
-    if (! WorldTaskBase::configureHook())
+    if (!WorldTaskBase::configureHook())
         return false;
     return true;
 }
 bool WorldTask::startHook()
 {
-    if (! WorldTaskBase::startHook())
+    if (!WorldTaskBase::startHook())
         return false;
     return true;
 }

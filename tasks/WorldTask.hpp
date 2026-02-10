@@ -14,8 +14,7 @@ namespace gz_rock {
     /*! \class WorldTask
      * \brief repreentation of a gazebo world
      */
-    class WorldTask : public WorldTaskBase
-    {
+    class WorldTask : public WorldTaskBase {
     private:
         friend class WorldTaskBase;
 
@@ -25,33 +24,34 @@ namespace gz_rock {
         std::string getWorldName() const;
 
     public:
-        virtual void setGazebo(
-            gz::sim::Entity const& worldEntity,
+        virtual void setGazebo(gz::sim::Entity const& worldEntity,
             std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
-            gz::sim::EventManager& event_manager
-        );
+            gz::sim::EventManager& event_manager);
 
         /** Hook for the gz_rock system plugin to announce the simulation time
          */
         void setSimTime(base::Time const& time);
 
         /** TaskContext constructor for WorldTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable via nameservices. \param initial_state The initial TaskState of
+         * the TaskContext. Default is Stopped state.
          */
         WorldTask(std::string const& name = "gazebo::WorldTask");
 
         /** TaskContext constructor for WorldTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable for nameservices. \param engine The RTT Execution engine to be
+         * used for this task, which serialises the execution of all commands, programs,
+         * state machines and incoming events for a task. \param initial_state The initial
+         * TaskState of the TaskContext. Default is Stopped state.
          */
         WorldTask(std::string const& name, RTT::ExecutionEngine* engine);
 
         /** Default deconstructor of WorldTask
          */
-	~WorldTask();
+        ~WorldTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -114,4 +114,3 @@ namespace gz_rock {
 }
 
 #endif
-

@@ -24,22 +24,20 @@ CameraTask::~CameraTask()
 {
 }
 
-
-
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See CameraTask.hpp for more detailed
 // documentation about them.
 
 bool CameraTask::configureHook()
 {
-    if (! CameraTaskBase::configureHook())
+    if (!CameraTaskBase::configureHook())
         return false;
 
     return true;
 }
 bool CameraTask::startHook()
 {
-    if (! CameraTaskBase::startHook()) {
+    if (!CameraTaskBase::startHook()) {
         return false;
     }
 
@@ -68,9 +66,8 @@ void CameraTask::cleanupHook()
 void CameraTask::readInput(gz::msgs::Image const& image)
 {
     unique_ptr<base::samples::frame::Frame> pframe;
-    bool ready = sensor_stop_guard([&]{
-        pframe.reset(output_frame.try_write_access());
-    });
+    bool ready =
+        sensor_stop_guard([&] { pframe.reset(output_frame.try_write_access()); });
     if (!ready) {
         return;
     }
@@ -97,7 +94,7 @@ void CameraTask::readInput(gz::msgs::Image const& image)
     pframe->received_time = base::Time::now();
     pframe->frame_status = base::samples::frame::STATUS_VALID;
 
-    sensor_stop_guard([&]{
+    sensor_stop_guard([&] {
         output_frame.reset(pframe.release());
         _frame.write(output_frame);
     });

@@ -8,7 +8,6 @@
 #include <string>
 
 #include "gz_rock/SensorTaskBase.hpp"
-#include "gz_rock/PluginTaskI.hpp"
 #include <gz/sim/System.hh>
 #include <gz/transport/Node.hh>
 
@@ -114,8 +113,7 @@ namespace gz_rock {
          */
         void cleanupHook();
 
-        void setGazebo(
-            std::string const& plugin_name,
+        void setGazebo(std::string const& plugin_name,
             gz::sim::Entity const& entity,
             std::shared_ptr<const sdf::Element> const& sdf,
             gz::sim::EntityComponentManager& ecm,
@@ -123,8 +121,7 @@ namespace gz_rock {
 
     protected:
         template <typename M, typename T>
-        void topicSubscribe(void (T::*_fp)(M const&),
-            std::string topicName)
+        void topicSubscribe(void (T::*_fp)(M const&), std::string topicName)
         {
             if (!m_node->Subscribe(topicName, _fp, static_cast<T*>(this))) {
                 throw std::runtime_error("failed to subscribe to topic " + topicName);
@@ -142,8 +139,8 @@ namespace gz_rock {
         std::mutex m_stop_guard_mtx;
         bool m_stopping_or_stopped = false;
 
-        template<typename F>
-        bool sensor_stop_guard(F impl) {
+        template <typename F> bool sensor_stop_guard(F impl)
+        {
             std::lock_guard<std::mutex> lock(m_stop_guard_mtx);
             if (!m_stopping_or_stopped) {
                 if (state() != RUNNING) {
