@@ -106,6 +106,8 @@ void ImuTask::readInput(gz::msgs::IMU const& imuMsg) {
     imuSensors.gyro = base::Vector3d(avel.x(), avel.y(), avel.z());
     imuSensors.acc  = base::Vector3d(linacc.x(), linacc.y(), linacc.z());
 
-    _orientation_samples.write(orientation);
-    _imu_samples.write(imuSensors);
+    sensor_stop_guard([&]{
+        _orientation_samples.write(orientation);
+        _imu_samples.write(imuSensors);
+    });
 }

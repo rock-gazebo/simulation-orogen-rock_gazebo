@@ -1,21 +1,22 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "CameraTask.hpp"
-#include <base/samples/Frame.hpp>
 #include "Helpers.hpp"
+#include <base/samples/Frame.hpp>
+#include <stdexcept>
+
+#include <base-logging/Logging.hpp>
 
 using namespace std;
 using namespace gz_rock;
 
 CameraTask::CameraTask(std::string const& name)
-    : CameraTaskBase(name),
-    output_frame(new base::samples::frame::Frame())
+    : CameraTaskBase(name)
 {
 }
 
 CameraTask::CameraTask(std::string const& name, RTT::ExecutionEngine* engine)
-    : CameraTaskBase(name, engine),
-    output_frame(new base::samples::frame::Frame())
+    : CameraTaskBase(name, engine)
 {
 }
 
@@ -65,16 +66,23 @@ void CameraTask::cleanupHook()
 
 void CameraTask::readInput(gz::msgs::Image const& image)
 {
-    if (state() != RUNNING) {
+    unique_ptr<base::samples::frame::Frame> pframe;
+    bool ready = sensor_stop_guard([&]{
+        pframe.reset(output_frame.try_write_access());
+    });
+    if (!ready) {
         return;
     }
 
-    base::samples::frame::Frame *pframe = output_frame.write_access();
+    if (!pframe) {
+        pframe.reset(new base::samples::frame::Frame());
+    }
     auto pixel_format = gzToRock(image.pixel_format_type());
-    pframe->init(
-        image.width(), image.height(),
-        pixel_format.first, pixel_format.second
-    );
+    pframe->init(image.width(),
+        image.height(),
+        pixel_format.first,
+        pixel_format.second,
+        -1);
 
     size_t gz_size = image.step() * image.height();
     if (gz_size != pframe->image.size()) {
@@ -85,8 +93,11 @@ void CameraTask::readInput(gz::msgs::Image const& image)
     }
     memcpy((void*)&(pframe->image.front()), (void*)image.data().data(), gz_size);
     pframe->time = getCurrentTime();
+    pframe->received_time = base::Time::now();
     pframe->frame_status = base::samples::frame::STATUS_VALID;
-    output_frame.reset(pframe);
 
-    _frame.write(pframe);
+    sensor_stop_guard([&]{
+        output_frame.reset(pframe.release());
+        _frame.write(output_frame);
+    });
 }

@@ -121,7 +121,6 @@ void GPSTask::readInput(gz::msgs::NavSat const& msg) {
     solution.deviationAltitude = m_deviation_vertical;
     solution.deviationLatitude = m_deviation_horizontal;
     solution.deviationLongitude = m_deviation_horizontal;
-    _gps_solution.write(solution);
 
     base::samples::RigidBodyState utm, position;
     if (_use_proper_utm_conversion.get())
@@ -160,10 +159,14 @@ void GPSTask::readInput(gz::msgs::NavSat const& msg) {
     utm.time = solution.time;
     utm.sourceFrame = _gps_frame.value();
     utm.targetFrame = _utm_frame.value();
-    _utm_samples.write(utm);
 
     position.time = solution.time;
     position.sourceFrame = _gps_frame.value();
     position.targetFrame = _nwu_frame.value();
-    _position_samples.write(position);
+
+    sensor_stop_guard([&]{
+        _gps_solution.write(solution);
+        _utm_samples.write(utm);
+        _position_samples.write(position);
+    });
 }

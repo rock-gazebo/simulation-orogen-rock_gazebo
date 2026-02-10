@@ -4,6 +4,7 @@
 #define ROCK_GAZEBO_SENSORTASK_TASK_HPP
 
 #include <sdf/Element.hh>
+#include <stdexcept>
 #include <string>
 
 #include "gz_rock/SensorTaskBase.hpp"
@@ -137,6 +138,24 @@ namespace gz_rock {
         gz::sim::Entity m_sensor_entity;
         gz::sim::EntityComponentManager* m_ecm = nullptr;
         std::string m_base_topic_name;
+
+        std::mutex m_stop_guard_mtx;
+        bool m_stopping_or_stopped = false;
+
+        template<typename F>
+        bool sensor_stop_guard(F impl) {
+            std::lock_guard<std::mutex> lock(m_stop_guard_mtx);
+            if (!m_stopping_or_stopped) {
+                if (state() != RUNNING) {
+                    return false;
+                }
+
+                impl();
+                return true;
+            }
+
+            return false;
+        }
     };
 }
 

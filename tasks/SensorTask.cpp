@@ -7,6 +7,7 @@
 #include <gz/sim/Link.hh>
 #include <gz/sim/Util.hh>
 #include <gz/sim/Sensor.hh>
+#include <mutex>
 #include <sdf/sdf.hh>
 
 #include <base-logging/Logging.hpp>
@@ -72,6 +73,8 @@ bool SensorTask::startHook()
 {
     if (! SensorTaskBase::startHook())
         return false;
+
+    m_stopping_or_stopped = false;
     return true;
 }
 void SensorTask::updateHook()
@@ -85,6 +88,9 @@ void SensorTask::errorHook()
 void SensorTask::stopHook()
 {
     SensorTaskBase::stopHook();
+
+    lock_guard<mutex> lock(m_stop_guard_mtx);
+    m_stopping_or_stopped = true;
 }
 void SensorTask::cleanupHook()
 {
