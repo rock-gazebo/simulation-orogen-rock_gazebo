@@ -7,9 +7,9 @@
 #include <gz/sim/System.hh>
 #include <gz/transport.hh>
 
-#include "gz_rock/CameraTaskBase.hpp"
+#include "rock_gazebo/CameraTaskBase.hpp"
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     class CameraTask : public CameraTaskBase {
         friend class CameraTaskBase;
@@ -21,7 +21,7 @@ namespace gz_rock {
          * identifiable via nameservices. \param initial_state The initial TaskState of
          * the TaskContext. Default is Stopped state.
          */
-        CameraTask(std::string const& name = "gz_rock::CameraTask");
+        CameraTask(std::string const& name = "rock_gazebo::CameraTask");
 
         /** TaskContext constructor for CameraTask
          * \param name Name of the task. This name needs to be unique to make it

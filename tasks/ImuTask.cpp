@@ -7,7 +7,7 @@
 #include <gz/sim/Sensor.hh>
 
 using namespace std;
-using namespace gz_rock;
+using namespace rock_gazebo;
 
 typedef gz::math::Pose3d IgnPose3d;
 typedef gz::math::Vector3d IgnVector3d;

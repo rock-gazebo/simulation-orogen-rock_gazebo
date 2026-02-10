@@ -7,15 +7,15 @@
 #ifndef ROCK_GAZEBO_MODELTASK_TASK_HPP
 #define ROCK_GAZEBO_MODELTASK_TASK_HPP
 
-#include "gz_rock/ModelTaskBase.hpp"
-#include "gz_rock/PluginTaskI.hpp"
+#include "rock_gazebo/ModelTaskBase.hpp"
+#include "rock_gazebo/PluginTaskI.hpp"
 #include <base/commands/Joints.hpp>
 #include <gz/sim/Entity.hh>
 #include <gz/sim/EventManager.hh>
 #include <gz/sim/System.hh>
 #include <sdf/Element.hh>
 
-namespace gz_rock {
+namespace rock_gazebo {
     class ModelTask : public ModelTaskBase {
     public:
         typedef std::vector<gz::sim::Entity> Joint_V;

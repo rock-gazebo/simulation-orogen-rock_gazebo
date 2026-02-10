@@ -8,7 +8,7 @@
 #include <mutex>
 #include <regex>
 
-using namespace gz_rock;
+using namespace rock_gazebo;
 using namespace gz;
 using namespace gz::sim;
 using namespace gz::sim::systems;

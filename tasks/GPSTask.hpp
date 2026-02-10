@@ -3,7 +3,7 @@
 #ifndef ROCK_GAZEBO_GPSTASK_TASK_HPP
 #define ROCK_GAZEBO_GPSTASK_TASK_HPP
 
-#include "gz_rock/GPSTaskBase.hpp"
+#include "rock_gazebo/GPSTaskBase.hpp"
 #include <gps_base/BaseTypes.hpp>
 #include <gps_base/UTMConverter.hpp>
 
@@ -12,7 +12,7 @@
 
 #include <base/Float.hpp>
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     /*! \class GPSTask
      * \brief The task context provides and requires services. It uses an
@@ -26,7 +26,7 @@ namespace gz_rock {
      * The name of a TaskContext is primarily defined via:
      * \verbatim
      * deployment 'deployment_name'
-     *     task('custom_task_name','gz_rock::GPSTask')
+     *     task('custom_task_name','rock_gazebo::GPSTask')
      * end
      * \endverbatim
      * It can be dynamically adapted when the deployment is called with a
@@ -62,7 +62,7 @@ namespace gz_rock {
          * \param initial_state The initial TaskState of the TaskContext.
          *      Default is Stopped state.
          */
-        GPSTask(std::string const& name = "gz_rock::GPSTask");
+        GPSTask(std::string const& name = "rock_gazebo::GPSTask");
 
         /** TaskContext constructor for GPSTask
          * \param name Name of the task. This name needs to be unique to make

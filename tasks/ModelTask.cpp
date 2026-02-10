@@ -26,7 +26,7 @@
 using namespace std;
 using namespace gz;
 using namespace gz::sim;
-using namespace gz_rock;
+using namespace rock_gazebo;
 using gz::math::Pose3d;
 using gz::math::Quaterniond;
 using gz::math::Vector3d;
@@ -564,7 +564,7 @@ bool ModelTask::configureHook()
     // Test if setGazeboModel() has been called -> if world/model are NULL
     if (m_model == kNullEntity) {
         throw std::logic_error(
-            "must call setGazebo before configuring a gz_rock::ModelTask");
+            "must call setGazebo before configuring a rock_gazebo::ModelTask");
     }
 
     setupLinks();

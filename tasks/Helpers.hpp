@@ -1,5 +1,5 @@
-#ifndef OROGEN_GZ_ROCK_HELPERS_HPP
-#define OROGEN_GZ_ROCK_HELPERS_HPP
+#ifndef OROGEN_rock_gazebo_HELPERS_HPP
+#define OROGEN_rock_gazebo_HELPERS_HPP
 
 #include <Eigen/Geometry>
 #include <base/Float.hpp>
@@ -11,9 +11,9 @@
 #include <gz/sim/Model.hh>
 #include <gz/sim/Util.hh>
 
-#include <gz_rock/BaseTask.hpp>
+#include <rock_gazebo/BaseTask.hpp>
 
-namespace gz_rock {
+namespace rock_gazebo {
     class SensorTask;
 
     inline Eigen::Vector3d gz2Eigen(gz::math::Vector3d const& gz)

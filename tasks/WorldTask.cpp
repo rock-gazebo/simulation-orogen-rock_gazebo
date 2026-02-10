@@ -3,7 +3,7 @@
 #include "WorldTask.hpp"
 #include <gz/sim/World.hh>
 
-using namespace gz_rock;
+using namespace rock_gazebo;
 using namespace gz::sim;
 
 WorldTask::WorldTask(std::string const& name)

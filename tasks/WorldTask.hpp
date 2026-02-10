@@ -3,13 +3,13 @@
 #ifndef ROCK_GAZEBO_WORLDTASK_TASK_HPP
 #define ROCK_GAZEBO_WORLDTASK_TASK_HPP
 
-#include "gz_rock/WorldTaskBase.hpp"
+#include "rock_gazebo/WorldTaskBase.hpp"
 #include <gz/sim/Entity.hh>
 #include <gz/sim/EntityComponentManager.hh>
 #include <gz/sim/EventManager.hh>
 #include <sdf/sdf.hh>
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     /*! \class WorldTask
      * \brief repreentation of a gazebo world
@@ -29,7 +29,7 @@ namespace gz_rock {
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager);
 
-        /** Hook for the gz_rock system plugin to announce the simulation time
+        /** Hook for the rock_gazebo system plugin to announce the simulation time
          */
         void setSimTime(base::Time const& time);
 

@@ -14,7 +14,7 @@
 #include <base-logging/Logging.hpp>
 #include <thread>
 
-using namespace gz_rock;
+using namespace rock_gazebo;
 using namespace std;
 
 using namespace gz::sim;

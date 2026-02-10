@@ -8,7 +8,7 @@
 #include <base-logging/Logging.hpp>
 
 using namespace std;
-using namespace gz_rock;
+using namespace rock_gazebo;
 
 CameraTask::CameraTask(std::string const& name)
     : CameraTaskBase(name)
@@ -87,7 +87,7 @@ void CameraTask::readInput(gz::msgs::Image const& image)
         LOG_ERROR_S << "CameraTask does not support having line padding. "
                     << "Rock expects " << pframe->image.size() << " but Gazebo reports "
                     << image.ByteSizeLong();
-        throw std::runtime_error("gz_rock::CameraTask image size mismatch");
+        throw std::runtime_error("rock_gazebo::CameraTask image size mismatch");
     }
     memcpy((void*)&(pframe->image.front()), (void*)image.data().data(), gz_size);
     pframe->time = getCurrentTime();

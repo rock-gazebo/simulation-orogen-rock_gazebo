@@ -3,8 +3,8 @@
 #ifndef ROCK_GAZEBO_BASETASK_TASK_HPP
 #define ROCK_GAZEBO_BASETASK_TASK_HPP
 
-#include "gz_rock/BaseTaskBase.hpp"
-#include "gz_rock/PluginTaskI.hpp"
+#include "rock_gazebo/BaseTaskBase.hpp"
+#include "rock_gazebo/PluginTaskI.hpp"
 
 #include <condition_variable>
 #include <gz/sim/Entity.hh>
@@ -13,7 +13,7 @@
 #include <gz/msgs/time.pb.h>
 #include <base/Time.hpp>
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     /*! \class BaseTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
@@ -24,7 +24,7 @@ namespace gz_rock {
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','gz_rock::BaseTask')
+         task('custom_task_name','rock_gazebo::BaseTask')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix argument.
@@ -55,7 +55,7 @@ namespace gz_rock {
          */
         void leaveGazeboCriticalZone();
 
-        /** Hook for the gz_rock system plugin to announce the simulation time
+        /** Hook for the rock_gazebo system plugin to announce the simulation time
          */
         void setSimTime(base::Time const& time) override;
 
@@ -85,7 +85,7 @@ namespace gz_rock {
         /** TaskContext constructor for BaseTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          */
-        BaseTask(std::string const& name = "gz_rock::BaseTask");
+        BaseTask(std::string const& name = "rock_gazebo::BaseTask");
 
         /** TaskContext constructor for BaseTask
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.

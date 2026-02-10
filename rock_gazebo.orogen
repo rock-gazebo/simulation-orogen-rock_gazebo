@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-name 'gz_rock'
+name 'rock_gazebo'
 
 cxx_standard "c++17"
 
 import_types_from 'base'
-import_types_from 'gz_rockTypes.hpp'
+import_types_from 'rock_gazeboTypes.hpp'
 import_types_from 'gps_base'
 
 using_library 'base-logging'
@@ -76,8 +76,8 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     # is unset (NaN)
     property 'cov_angular_velocity', '/base/Matrix3d'
 
-    property 'exported_links', 'std/vector<gz_rock/LinkExport>'
-    property 'exported_joints', 'std/vector<gz_rock/JointExport>'
+    property 'exported_links', 'std/vector<rock_gazebo/LinkExport>'
+    property 'exported_joints', 'std/vector<rock_gazebo/JointExport>'
 
 
     # The model's pose if one wants to "warp"

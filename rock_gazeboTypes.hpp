@@ -7,7 +7,7 @@
 #include <base/Float.hpp>
 #include <vector>
 
-namespace gz_rock
+namespace rock_gazebo
 {
     struct LinkExport {
         // The port name

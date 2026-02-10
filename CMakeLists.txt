@@ -1,10 +1,10 @@
-PROJECT(gz_rock)
+PROJECT(rock_gazebo)
 cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_CXX_STANDARD_REQUIRED 17)
 
 SET (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/.orogen/config")
-INCLUDE(gz_rockBase)
+INCLUDE(rock_gazeboBase)
 
 
 # FIND_PACKAGE(KDL)

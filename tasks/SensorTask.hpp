@@ -7,11 +7,11 @@
 #include <stdexcept>
 #include <string>
 
-#include "gz_rock/SensorTaskBase.hpp"
+#include "rock_gazebo/SensorTaskBase.hpp"
 #include <gz/sim/System.hh>
 #include <gz/transport/Node.hh>
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     /*! \class SensorTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine
@@ -25,7 +25,7 @@ namespace gz_rock {
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','gz_rock::SensorTask')
+         task('custom_task_name','rock_gazebo::SensorTask')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix
@@ -40,7 +40,7 @@ namespace gz_rock {
          * identifiable via nameservices. \param initial_state The initial TaskState of
          * the TaskContext. Default is Stopped state.
          */
-        SensorTask(std::string const& name = "gz_rock::SensorTask");
+        SensorTask(std::string const& name = "rock_gazebo::SensorTask");
 
         /** TaskContext constructor for SensorTask
          * \param name Name of the task. This name needs to be unique to make it

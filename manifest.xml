@@ -12,6 +12,6 @@
   <depend package="base/logging" />
   <depend package="base/orogen/types" />
 
-  <depend package="simulation/gz" />
+  <depend package="simulation/gazebo" />
   <depend package="drivers/orogen/gps_base" />
 </package>

@@ -12,7 +12,7 @@
 #include "Helpers.hpp"
 
 using namespace std;
-using namespace gz_rock;
+using namespace rock_gazebo;
 using gz::math::CoordinateVector3;
 
 typedef gz::math::Angle GzAngle;

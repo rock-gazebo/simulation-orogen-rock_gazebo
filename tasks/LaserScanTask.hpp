@@ -3,18 +3,18 @@
 #ifndef ROCK_GAZEBO_LASERSCANTASK_TASK_HPP
 #define ROCK_GAZEBO_LASERSCANTASK_TASK_HPP
 
-#include "gz_rock/LaserScanTaskBase.hpp"
+#include "rock_gazebo/LaserScanTaskBase.hpp"
 #include <base/samples/DepthMap.hpp>
 #include <gz/msgs/laserscan.pb.h>
 #include <gz/sim/System.hh>
 #include <gz/transport.hh>
 
-namespace gz_rock {
+namespace rock_gazebo {
     class LaserScanTask : public LaserScanTaskBase {
         friend class LaserScanTaskBase;
 
     public:
-        LaserScanTask(std::string const& name = "gz_rock::LaserScanTask");
+        LaserScanTask(std::string const& name = "rock_gazebo::LaserScanTask");
         LaserScanTask(std::string const& name, RTT::ExecutionEngine* engine);
         ~LaserScanTask();
 

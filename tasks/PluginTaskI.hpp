@@ -6,9 +6,9 @@
 #include <sdf/Element.hh>
 #include <string>
 
-namespace gz_rock {
+namespace rock_gazebo {
     /**
-     * Abstract base class used by the gz_rock plugin to instanciate tasks
+     * Abstract base class used by the rock_gazebo plugin to instanciate tasks
      * associated with model plugins
      */
     struct PluginTaskI {

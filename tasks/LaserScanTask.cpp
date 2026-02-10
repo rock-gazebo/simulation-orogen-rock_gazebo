@@ -4,7 +4,7 @@
 #include "Helpers.hpp"
 
 using namespace std;
-using namespace gz_rock;
+using namespace rock_gazebo;
 using namespace base;
 using namespace samples;
 

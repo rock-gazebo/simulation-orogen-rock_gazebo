@@ -3,14 +3,14 @@
 #ifndef ROCK_GAZEBO_IMUTASK_TASK_HPP
 #define ROCK_GAZEBO_IMUTASK_TASK_HPP
 
-#include "gz_rock/ImuTaskBase.hpp"
+#include "rock_gazebo/ImuTaskBase.hpp"
 
 #include <base/samples/IMUSensors.hpp>
 #include <base/samples/RigidBodyState.hpp>
 #include <gz/math/Quaternion.hh>
 #include <gz/msgs/imu.pb.h>
 
-namespace gz_rock {
+namespace rock_gazebo {
 
     /*! \class ImuTask
      * \brief The task context provides and requires services. It uses an ExecutionEngine
@@ -24,7 +24,7 @@ namespace gz_rock {
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','gz_rock::ImuTask')
+         task('custom_task_name','rock_gazebo::ImuTask')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix
@@ -42,7 +42,7 @@ namespace gz_rock {
          * identifiable via nameservices. \param initial_state The initial TaskState of
          * the TaskContext. Default is Stopped state.
          */
-        ImuTask(std::string const& name = "gz_rock::ImuTask");
+        ImuTask(std::string const& name = "rock_gazebo::ImuTask");
 
         /** TaskContext constructor for ImuTask
          * \param name Name of the task. This name needs to be unique to make it
