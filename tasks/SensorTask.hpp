@@ -125,7 +125,9 @@ namespace gz_rock {
         void topicSubscribe(void (T::*_fp)(M const&),
             std::string topicName)
         {
-            m_node->Subscribe(topicName, _fp, static_cast<T*>(this));
+            if (!m_node->Subscribe(topicName, _fp, static_cast<T*>(this))) {
+                throw std::runtime_error("failed to subscribe to topic " + topicName);
+            }
             gzmsg << getName() << ": subscribed to gazebo topic ~/" + topicName
                   << std::endl;
         }
