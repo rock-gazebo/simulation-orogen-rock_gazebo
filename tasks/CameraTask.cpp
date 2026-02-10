@@ -35,8 +35,6 @@ bool CameraTask::configureHook()
     if (! CameraTaskBase::configureHook())
         return false;
 
-    GazeboSync sync(*this);
-    topicSubscribe(&CameraTask::readInput, m_base_topic_name + "/image");
     return true;
 }
 bool CameraTask::startHook()
@@ -45,6 +43,7 @@ bool CameraTask::startHook()
         return false;
     }
 
+    topicSubscribe(&CameraTask::readInput, m_base_topic_name);
     return true;
 }
 void CameraTask::updateHook()
@@ -58,6 +57,8 @@ void CameraTask::errorHook()
 void CameraTask::stopHook()
 {
     CameraTaskBase::stopHook();
+
+    m_node->Unsubscribe(m_base_topic_name);
 }
 void CameraTask::cleanupHook()
 {
