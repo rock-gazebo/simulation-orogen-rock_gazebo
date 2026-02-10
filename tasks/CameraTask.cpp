@@ -76,10 +76,14 @@ void CameraTask::readInput(gz::msgs::Image const& image)
         pixel_format.first, pixel_format.second
     );
 
-    if (image.ByteSizeLong() != pframe->image.size()) {
+    size_t gz_size = image.step() * image.height();
+    if (gz_size != pframe->image.size()) {
+        LOG_ERROR_S << "CameraTask does not support having line padding. "
+                    << "Rock expects " << pframe->image.size() << " but Gazebo reports "
+                    << image.ByteSizeLong();
         throw std::runtime_error("gz_rock::CameraTask image size mismatch");
     }
-    memcpy((void*)&(pframe->image.front()), (void*)image.data().data(), image.ByteSizeLong());
+    memcpy((void*)&(pframe->image.front()), (void*)image.data().data(), gz_size);
     pframe->time = getCurrentTime();
     pframe->frame_status = base::samples::frame::STATUS_VALID;
     output_frame.reset(pframe);
