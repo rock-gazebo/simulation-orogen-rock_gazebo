@@ -6,19 +6,22 @@
 #include "rock_gazebo/BaseTaskBase.hpp"
 #include "rock_gazebo/PluginTaskI.hpp"
 
+#include <base/Time.hpp>
 #include <condition_variable>
+#include <gz/msgs/time.pb.h>
 #include <gz/sim/Entity.hh>
 #include <gz/sim/System.hh>
 #include <gz/sim/components/Name.hh>
-#include <gz/msgs/time.pb.h>
-#include <base/Time.hpp>
 
 namespace rock_gazebo {
 
     /*! \class BaseTask
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
+     * \brief The task context provides and requires services. It uses an ExecutionEngine
+     to perform its functions.
+     * Essential interfaces are operations, data flow ports and properties. These
+     interfaces have been defined using the oroGen specification.
+     * In order to modify the interfaces you should (re)use oroGen and rely on the
+     associated workflow.
      *
      * \details
      * The name of a TaskContext is primarily defined via:
@@ -27,10 +30,10 @@ namespace rock_gazebo {
          task('custom_task_name','rock_gazebo::BaseTask')
      end
      \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+     *  It can be dynamically adapted when the deployment is called with a prefix
+     argument.
      */
-    class BaseTask : public BaseTaskBase, public PluginTaskI
-    {
+    class BaseTask : public BaseTaskBase, public PluginTaskI {
         friend class BaseTaskBase;
 
     protected:
@@ -77,19 +80,21 @@ namespace rock_gazebo {
          */
         base::Time getCurrentTime(base::Time sim_timestamp) const;
 
-        std::optional<gz::sim::Entity> findParentOfType(
-            gz::sim::Entity entity, gz::sim::EntityComponentManager& ecm,
-            gz::sim::ComponentTypeId const& typeId
-        );
+        std::optional<gz::sim::Entity> findParentOfType(gz::sim::Entity entity,
+            gz::sim::EntityComponentManager& ecm,
+            gz::sim::ComponentTypeId const& typeId);
 
         /** TaskContext constructor for BaseTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable via nameservices.
          */
         BaseTask(std::string const& name = "rock_gazebo::BaseTask");
 
         /** TaskContext constructor for BaseTask
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable for nameservices. \param engine The RTT Execution engine to be
+         * used for this task, which serialises the execution of all commands, programs,
+         * state machines and incoming events for a task.
          */
         BaseTask(std::string const& name, RTT::ExecutionEngine* engine);
 
@@ -162,10 +167,8 @@ namespace rock_gazebo {
         std::string getNamespaceFromPluginName(std::string const& plugin_name);
 
         /** Called by the plugins to connect the task and the simulation */
-        void setGazebo(
-            std::string const& pluginName,
-            gz::sim::Entity const& entity,
-            sdf::ElementConstPtr const& sdf,
+        void setGazebo(gz::sim::Entity const& entity,
+            sdf::ElementConstPtr const& plugin_sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         ) override;
@@ -178,4 +181,3 @@ namespace rock_gazebo {
 }
 
 #endif
-

@@ -37,13 +37,12 @@ GPSTask::~GPSTask()
 {
 }
 
-void GPSTask::setGazebo(std::string const& pluginName,
-    gz::sim::Entity const& entity,
+void GPSTask::setGazebo(gz::sim::Entity const& entity,
     sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    GPSTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
+    GPSTaskBase::setGazebo(entity, sdf, ecm, event_manager);
 }
 
 bool GPSTask::configureHook()

@@ -95,13 +95,12 @@ void SensorTask::cleanupHook()
     m_node.reset();
     SensorTaskBase::cleanupHook();
 }
-void SensorTask::setGazebo(std::string const& plugin_name,
-    gz::sim::Entity const& sensor,
+void SensorTask::setGazebo(gz::sim::Entity const& sensor,
     std::shared_ptr<const sdf::Element> const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    SensorTaskBase::setGazebo(plugin_name, sensor, sdf, ecm, event_manager);
+    SensorTaskBase::setGazebo(sensor, sdf, ecm, event_manager);
     m_ecm = &ecm;
     m_sensor_entity = sensor;
 

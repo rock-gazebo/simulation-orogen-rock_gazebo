@@ -131,8 +131,7 @@ namespace rock_gazebo {
 
     protected:
     public:
-        void setGazebo(std::string const& plugin_name,
-            gz::sim::Entity const& model_entity,
+        void setGazebo(gz::sim::Entity const& entity,
             sdf::ElementConstPtr const& model_sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager) override;

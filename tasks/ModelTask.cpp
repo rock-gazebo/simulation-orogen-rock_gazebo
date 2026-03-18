@@ -50,18 +50,24 @@ ModelTask::~ModelTask()
     releaseLinks();
 }
 
-void ModelTask::setGazebo(std::string const& plugin_name,
-    gz::sim::Entity const& model_entity,
-    sdf::ElementConstPtr const& model_sdf,
+void ModelTask::setGazebo(gz::sim::Entity const& entity,
+    sdf::ElementConstPtr const& plugin_sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    m_model = model_entity;
+    auto model_name = plugin_sdf->Get<std::string>("exported_gz_model");
+    if (model_name.empty()) {
+        m_model = entity;
+    }
+    else {
+        m_model = resolveSubmodelRecursive(entity, model_name, ecm);
+    }
+
     m_ecm = &ecm;
 
-    ModelTaskBase::setGazebo(plugin_name, model_entity, model_sdf, ecm, event_manager);
+    ModelTaskBase::setGazebo(m_model, plugin_sdf, ecm, event_manager);
 
-    string name = "gazebo::" + scopedName(model_entity, ecm, "::");
+    string name = "gazebo::" + scopedName(m_model, ecm, "::");
     provides()->setName(name);
     _name.set(name);
 
@@ -70,7 +76,7 @@ void ModelTask::setGazebo(std::string const& plugin_name,
     }
 
     if (_world_frame.get().empty()) {
-        auto world = gz::sim::worldEntity(model_entity, ecm);
+        auto world = gz::sim::worldEntity(m_model, ecm);
         _world_frame.set(gz::sim::World(world).Name(ecm).value_or("world"));
     }
 

@@ -31,13 +31,12 @@ ImuTask::~ImuTask()
 {
 }
 
-void ImuTask::setGazebo(std::string const& pluginName,
-    gz::sim::Entity const& entity,
+void ImuTask::setGazebo(gz::sim::Entity const& entity,
     sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    ImuTaskBase::setGazebo(pluginName, entity, sdf, ecm, event_manager);
+    ImuTaskBase::setGazebo(entity, sdf, ecm, event_manager);
 }
 
 /// The following lines are template definitions for the various state machine

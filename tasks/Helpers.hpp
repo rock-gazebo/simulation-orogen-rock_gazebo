@@ -142,6 +142,13 @@ namespace rock_gazebo {
         return context;
     }
 
+    inline gz::sim::Entity resolveSubmodelRecursive(gz::sim::Entity const& root,
+        std::string const& scoped_name,
+        gz::sim::EntityComponentManager& ecm)
+    {
+        return resolveSubmodelRecursive(root, splitScopedName(scoped_name), ecm);
+    }
+
     inline gz::sim::Entity resolveJointRecursive(gz::sim::Entity const& root,
         std::string const& scopedName,
         gz::sim::EntityComponentManager& ecm)

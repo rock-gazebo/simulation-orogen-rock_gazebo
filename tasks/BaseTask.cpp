@@ -113,9 +113,8 @@ std::string BaseTask::getNamespaceFromPluginName(std::string const& plugin_name)
     return std::regex_replace(plugin_name, std::regex("__"), "/");
 }
 
-void BaseTask::setGazebo(std::string const& pluginName,
-    gz::sim::Entity const& entity,
-    sdf::ElementConstPtr const& sdf,
+void BaseTask::setGazebo(gz::sim::Entity const& entity,
+    sdf::ElementConstPtr const& plugin_sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {

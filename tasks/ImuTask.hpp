@@ -118,8 +118,7 @@ namespace rock_gazebo {
         void readInput(gz::msgs::IMU const& imuMsg);
 
     protected:
-        void setGazebo(std::string const& pluginName,
-            gz::sim::Entity const& entity,
+        void setGazebo(gz::sim::Entity const& entity,
             sdf::ElementConstPtr const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager) override;
