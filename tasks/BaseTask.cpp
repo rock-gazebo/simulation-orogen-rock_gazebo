@@ -108,22 +108,33 @@ std::optional<gz::sim::Entity> BaseTask::findParentOfType(gz::sim::Entity entity
     return std::make_optional(search);
 }
 
-std::string BaseTask::getNamespaceFromPluginName(std::string const& plugin_name)
-{
-    return std::regex_replace(plugin_name, std::regex("__"), "/");
-}
-
 void BaseTask::setGazebo(gz::sim::Entity const& entity,
-    sdf::ElementConstPtr const& plugin_sdf,
+    sdf::ElementConstPtr const& task_sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
+    if (task_sdf->HasAttribute("name")) {
+        // Saved here to be used later in resolveTaskName
+        m_task_name = task_sdf->Get<std::string>("name");
+    }
 }
 
-void BaseTask::setGazeboPluginTaskName(std::string const& plugin_task_name)
+void BaseTask::resolveTaskName(std::optional<std::string> const& default_name)
 {
-    provides()->setName(plugin_task_name);
-    _name.set(plugin_task_name);
+    std::string name;
+    if (m_task_name.has_value()) {
+        name = m_task_name.value();
+    }
+    else if (default_name.has_value()) {
+        name = m_task_name.value();
+    }
+    else {
+        throw std::logic_error(
+            "'name' attribute not set on a task whose model does not set a default");
+    }
+
+    provides()->setName(name);
+    _name.set(name);
 }
 
 void BaseTask::gazeboCriticalZone()

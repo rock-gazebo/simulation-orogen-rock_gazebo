@@ -132,7 +132,7 @@ namespace rock_gazebo {
     protected:
     public:
         void setGazebo(gz::sim::Entity const& entity,
-            sdf::ElementConstPtr const& model_sdf,
+            sdf::ElementConstPtr const& sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager) override;
 

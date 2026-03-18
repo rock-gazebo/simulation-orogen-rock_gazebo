@@ -31,9 +31,6 @@ namespace rock_gazebo {
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager) = 0;
 
-        /** Hook that changes the task name */
-        virtual void setGazeboPluginTaskName(std::string const& pluginTaskName) = 0;
-
         /** Let other threads process gazebo-critical parts of their code
          *
          * This is called by the plugin at each update step, to allow for other

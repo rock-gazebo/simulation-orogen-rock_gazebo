@@ -101,14 +101,8 @@ void SensorTask::setGazebo(gz::sim::Entity const& sensor,
     gz::sim::EventManager& event_manager)
 {
     SensorTaskBase::setGazebo(sensor, sdf, ecm, event_manager);
+    resolveTaskName("gazebo::" + scopedName(sensor, ecm, "::", false));
+
     m_ecm = &ecm;
     m_sensor_entity = sensor;
-
-    string taskName = "gazebo::" + scopedName(sensor, ecm, "::", false);
-    if (!provides()) {
-        throw std::runtime_error("SensorTask::provides returned NULL");
-    }
-
-    provides()->setName(taskName);
-    _name.set(taskName);
 }

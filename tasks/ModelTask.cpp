@@ -51,11 +51,11 @@ ModelTask::~ModelTask()
 }
 
 void ModelTask::setGazebo(gz::sim::Entity const& entity,
-    sdf::ElementConstPtr const& plugin_sdf,
+    sdf::ElementConstPtr const& sdf,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    auto model_name = plugin_sdf->Get<std::string>("exported_gz_model");
+    auto model_name = sdf->Get<std::string>("exported_gz_model");
     if (model_name.empty()) {
         m_model = entity;
     }
@@ -65,11 +65,8 @@ void ModelTask::setGazebo(gz::sim::Entity const& entity,
 
     m_ecm = &ecm;
 
-    ModelTaskBase::setGazebo(m_model, plugin_sdf, ecm, event_manager);
-
-    string name = "gazebo::" + scopedName(m_model, ecm, "::");
-    provides()->setName(name);
-    _name.set(name);
+    ModelTaskBase::setGazebo(m_model, sdf, ecm, event_manager);
+    resolveTaskName("gazebo::" + scopedName(m_model, ecm, "::"));
 
     if (_model_frame.get().empty()) {
         _model_frame.set(scopedName(m_model, ecm, "::"));

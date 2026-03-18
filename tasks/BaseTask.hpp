@@ -44,6 +44,8 @@ namespace rock_gazebo {
         std::mutex m_gazebo_critical_mutex;
         std::condition_variable m_gazebo_critical_signal;
 
+        std::optional<std::string> m_task_name;
+
     public:
         /** Called by the gazebo plugin to allow other threads to synchronize with it */
         void gazeboCriticalZone() override;
@@ -160,23 +162,19 @@ namespace rock_gazebo {
          */
         void cleanupHook();
 
-        /** Get a topic name from the given plugin name
+        /** Called by the plugins to connect the task and the simulation
          *
-         * This method replaces '__' for '/' in 'pluginName'
+         * @param sdf the SDF object for the <task ...> element
          */
-        std::string getNamespaceFromPluginName(std::string const& plugin_name);
-
-        /** Called by the plugins to connect the task and the simulation */
         void setGazebo(gz::sim::Entity const& entity,
-            sdf::ElementConstPtr const& plugin_sdf,
+            sdf::ElementConstPtr const& task_sdf,
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         ) override;
 
-        /**
-         * This method set the gazebo plugin task name
+        /** Called in setGazebo to set the actual task name
          */
-        void setGazeboPluginTaskName(std::string const& plugin_task_name) override;
+        void resolveTaskName(std::optional<std::string> const& default_name);
     };
 }
 
