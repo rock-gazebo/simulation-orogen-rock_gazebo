@@ -55,18 +55,10 @@ void ModelTask::setGazebo(gz::sim::Entity const& entity,
     gz::sim::EntityComponentManager& ecm,
     gz::sim::EventManager& event_manager)
 {
-    auto model_name = sdf->Get<std::string>("exported_gz_model");
-    if (model_name.empty()) {
-        m_model = entity;
-    }
-    else {
-        m_model = resolveSubmodelRecursive(entity, model_name, ecm);
-    }
-
+    m_model = entity;
     m_ecm = &ecm;
 
     ModelTaskBase::setGazebo(m_model, sdf, ecm, event_manager);
-    resolveTaskName("gazebo::" + scopedName(m_model, ecm, "::"));
 
     if (_model_frame.get().empty()) {
         _model_frame.set(scopedName(m_model, ecm, "::"));
@@ -78,6 +70,10 @@ void ModelTask::setGazebo(gz::sim::Entity const& entity,
     }
 
     auto link_entity = Model(m_model).CanonicalLink(*m_ecm);
+    if (link_entity == kNullEntity) {
+        throw std::invalid_argument("cannot find canonical link for " +
+                                    gz::sim::scopedName(m_model, ecm, "::"));
+    }
     Link(link_entity).EnableAccelerationChecks(*m_ecm, true);
     Link(link_entity).EnableVelocityChecks(*m_ecm, true);
 }

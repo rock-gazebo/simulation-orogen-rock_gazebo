@@ -171,10 +171,6 @@ namespace rock_gazebo {
             gz::sim::EntityComponentManager& ecm,
             gz::sim::EventManager& event_manager
         ) override;
-
-        /** Called in setGazebo to set the actual task name
-         */
-        void resolveTaskName(std::optional<std::string> const& default_name);
     };
 }
 
