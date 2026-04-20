@@ -22,7 +22,11 @@ task_context 'BaseTask' do
     property "name", "string"
 end
 
-# Representation of a gazebo Model object
+# Interface to a Gazebo model entity
+#
+# By default, the task exports the model's pose and all its joints (including
+# its submodel's). Subsets of the links and joints can be exported using
+# the exported_links and exported_joints properties.
 task_context 'ModelTask', subclasses: 'BaseTask' do
     needs_configuration
 
@@ -65,22 +69,52 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     # is unset (NaN)
     property 'cov_angular_velocity', '/base/Matrix3d'
 
+    # List of links that should be exported as individual ports
+    #
+    # The task will create dynamic ports during its configuration based on the
+    # LinkExport's port_name field:
+    # - output port #{name}_state_samples of type base/samples/Joints which exports
+    #   the pose and twist information. Covariances are set according to the LinkExport
+    #   fields
+    # - input port #{name}_wrench of type base/samples/Wrench, which is applied on the
+    #   link.
+    # - output port #{name}_acceleration of types base/samples/Acceleration
     property 'exported_links', 'std/vector<rock_gazebo/LinkExport>'
+
+    dynamic_input_port(/_wrench$/, '/base/samples/Wrench')
+    dynamic_output_port(/.*/, '/base/samples/RigidBodyState')
+    dynamic_output_port(/_acceleration$/, '/base/samples/RigidBodyAcceleration')
+
+    # List of joint sets that should be exported as individual ports
+    #
+    # The task will create dynamic ports during its configuration based on the
+    # JointExport's port_name field:
+    # - output port #{name}_joints_samples of type base/samples/Joints which exports
+    #   the joint position and velocity
+    # - input port #{name}_joints_cmd of type base/samples/Joints which will be applied
+    #   link.
     property 'exported_joints', 'std/vector<rock_gazebo/JointExport>'
 
+    dynamic_input_port(/_cmd$/, '/base/samples/Joints')
+    dynamic_output_port(/_samples$/, '/base/samples/Joints')
 
     # The model's pose if one wants to "warp"
     input_port 'model_pose', '/base/samples/RigidBodyState'
 
-    # Joints input/output ports
+    # Command on all the model's joints
+    #
+    # Cannot be used in conjunction with the joint_cmd ports created by
+    # the joint exports
+    #
+    # It is recommended to use joint exports instead as it will be stable across
+    # inclusion of models.
     input_port 'joints_cmd', '/base/samples/Joints'
+
+    # Status of all the model's joints (including its submodels)
+    #
+    # It is recommended to use joint exports instead as it will be stable across
+    # inclusion of models.
     output_port 'joints_samples', '/base/samples/Joints'
-    # Link export
-    dynamic_input_port(/_wrench$/, '/base/samples/Wrench')
-    dynamic_output_port(/.*/, '/base/samples/RigidBodyState')
-    dynamic_output_port(/_acceleration$/, '/base/samples/RigidBodyAcceleration')
-    dynamic_input_port(/_cmd$/, '/base/samples/Joints')
-    dynamic_output_port(/_samples$/, '/base/samples/Joints')
 
     exception_states 'INVALID_JOINT_COMMAND'
 end
