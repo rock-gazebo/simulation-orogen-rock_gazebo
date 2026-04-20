@@ -7,6 +7,7 @@
 #include <gz/math.hh>
 #include <gz/msgs/details/image.pb.h>
 #include <gz/msgs/image.pb.h>
+#include <gz/msgs/vector3d.pb.h>
 #include <gz/sim/EntityComponentManager.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/Util.hh>
@@ -15,6 +16,15 @@
 
 namespace rock_gazebo {
     class SensorTask;
+
+    inline gz::msgs::Vector3d eigen2Proto(Eigen::Vector3d const& eigen)
+    {
+        gz::msgs::Vector3d vector3d;
+        vector3d.set_x(eigen.x());
+        vector3d.set_y(eigen.y());
+        vector3d.set_z(eigen.z());
+        return vector3d;
+    }
 
     inline Eigen::Vector3d gz2Eigen(gz::math::Vector3d const& gz)
     {
