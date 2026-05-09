@@ -142,8 +142,10 @@ namespace rock_gazebo {
         for (auto const& n : names) {
             auto child = gz::sim::Model(context).ModelByName(ecm, n);
             if (child == gz::sim::kNullEntity) {
-                throw std::invalid_argument("could not find child model " + n + " of " +
-                                            gz::sim::scopedName(context, ecm, "::"));
+                throw std::invalid_argument(
+                    "could not find child model " + n + " of " +
+                    gz::sim::scopedName(context, ecm, "::", false)
+                );
             }
 
             context = child;
@@ -192,6 +194,10 @@ namespace rock_gazebo {
 
         auto linkName = names.back();
         names.pop_back();
+
+        if (gz::sim::Model(root).Name(ecm) == names.front()) {
+            names.pop_front();
+        }
 
         auto submodel = resolveSubmodelRecursive(root, names, ecm);
 
