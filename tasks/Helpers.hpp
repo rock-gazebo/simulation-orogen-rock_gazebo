@@ -126,7 +126,7 @@ namespace rock_gazebo {
         std::list<std::string> result;
         std::string::size_type delim = scopedName.find("::"), current = 0;
         while (delim != std::string::npos) {
-            result.push_back(scopedName.substr(current, delim));
+            result.push_back(scopedName.substr(current, delim - current));
             current = delim + 2;
             delim = scopedName.find("::", current);
         }
