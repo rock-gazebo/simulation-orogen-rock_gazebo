@@ -88,6 +88,8 @@ namespace rock_gazebo {
 
             std::vector<double> position_offsets;
 
+            std::vector<std::string> command_interfaces;
+
             InternalJointExport()
                 : permanent(false)
                 , in_port(nullptr)

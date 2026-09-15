@@ -144,6 +144,10 @@ void ModelTask::setupJoints()
         else {
             export_setup.position_offsets = export_request.position_offsets;
         }
+        export_setup.command_interfaces = export_request.command_interfaces;
+        if (export_setup.command_interfaces.size() < export_setup.gazebo_joints.size()) {
+            export_setup.command_interfaces.resize(export_setup.gazebo_joints.size(), "");
+        }
         exported_joints.push_back(export_setup);
     }
 
@@ -396,14 +400,26 @@ void ModelTask::readExportedJointCmd(base::Time const& time,
         auto joint = Joint(exported_joint.gazebo_joints[i]);
         double position_offset = exported_joint.position_offsets[i];
 
-        // Apply effort to joint
-        if (cmd.isEffort()) {
+        std::string target_interface = exported_joint.command_interfaces[i];
+        if (target_interface.empty()) {
+            if (cmd.isEffort()) {
+                target_interface = "effort";
+            }
+            else if (cmd.isPosition()) {
+                target_interface = "position";
+            }
+            else if (cmd.isSpeed()) {
+                target_interface = "velocity";
+            }
+        }
+
+        if (target_interface == "effort") {
             joint.SetForce(*m_ecm, {cmd.effort});
         }
-        else if (cmd.isPosition()) {
+        else if (target_interface == "position") {
             joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
         }
-        else if (cmd.isSpeed()) {
+        else if (target_interface == "velocity") {
             joint.SetVelocity(*m_ecm, {cmd.speed});
         }
         else {
