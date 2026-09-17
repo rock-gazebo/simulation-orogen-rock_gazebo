@@ -6,6 +6,7 @@
 #include <base/Eigen.hpp>
 #include <base/Float.hpp>
 #include <vector>
+#include "base/JointState.hpp"
 
 namespace rock_gazebo
 {
@@ -65,11 +66,11 @@ namespace rock_gazebo
          */
         bool ignore_joint_names;
 
-        /** Which command interfaces to use for the joints commands, the possible
-         * values are "position", "velocity", and "effort". If not specified,
+        /** Which control mode to use for the joints commands, the possible
+         * values are POSITION, SPEED, EFFORT, UNSET. If not specified,
          * the type is inferred from the contents of the command message.
          */
-        std::vector<std::string> command_interfaces;
+        std::vector<base::JointState::MODE> control_modes;
 
         JointExport()
             : ignore_joint_names(false) {}

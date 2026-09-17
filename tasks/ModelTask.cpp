@@ -22,6 +22,7 @@
 #include <stdexcept>
 
 #include "Helpers.hpp"
+#include "base/JointState.hpp"
 
 using namespace std;
 using namespace gz;
@@ -100,13 +101,16 @@ void ModelTask::setupJoints()
         string prefix = export_request.prefix;
         size_t export_size = export_request.joints.size();
 
-        if (!export_request.position_offsets.empty()) {
-            if (export_request.position_offsets.size() != export_size) {
-                throw std::invalid_argument(
-                    "ModelTask: joint export position_offsets field must either be "
-                    "empty, or of the same size of the joints");
-            }
-        }
+        validateExportFieldSize(
+            export_request.position_offsets,
+            export_size,
+            "position_offsets"
+        );
+        validateExportFieldSize(
+            export_request.control_modes,
+            export_size,
+            "control_modes"
+        );
 
         InternalJointExport export_setup;
         for (auto const& gz_joint_name : export_request.joints) {
@@ -144,9 +148,12 @@ void ModelTask::setupJoints()
         else {
             export_setup.position_offsets = export_request.position_offsets;
         }
-        export_setup.command_interfaces = export_request.command_interfaces;
-        if (export_setup.command_interfaces.size() < export_setup.gazebo_joints.size()) {
-            export_setup.command_interfaces.resize(export_setup.gazebo_joints.size(), "");
+        if (export_request.control_modes.empty()) {
+            export_setup.control_modes.resize(
+                export_setup.gazebo_joints.size(), base::JointState::UNSET);
+        }
+        else {
+            export_setup.control_modes = export_request.control_modes;
         }
         exported_joints.push_back(export_setup);
     }
@@ -400,35 +407,33 @@ void ModelTask::readExportedJointCmd(base::Time const& time,
         auto joint = Joint(exported_joint.gazebo_joints[i]);
         double position_offset = exported_joint.position_offsets[i];
 
-        std::string target_interface = exported_joint.command_interfaces[i];
-        if (target_interface.empty()) {
-            if (cmd.isEffort()) {
-                target_interface = "effort";
-            }
-            else if (cmd.isPosition()) {
-                target_interface = "position";
-            }
-            else if (cmd.isSpeed()) {
-                target_interface = "velocity";
+        base::JointState::MODE target_interface = exported_joint.control_modes[i];
+        if (target_interface == base::JointState::UNSET) {
+            try {
+                target_interface = cmd.getMode();
+            } catch (std::runtime_error const& e) {
+                LOG_ERROR_S << "Received command that is neither a pure effort, "
+                            << "position or speed" << std::endl;
+                LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
+                            << " e=" << cmd.effort << " r=" << cmd.raw
+                            << " a=" << cmd.acceleration << std::endl;
+                return exception(INVALID_JOINT_COMMAND);
             }
         }
 
-        if (target_interface == "effort") {
-            joint.SetForce(*m_ecm, {cmd.effort});
-        }
-        else if (target_interface == "position") {
-            joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
-        }
-        else if (target_interface == "velocity") {
-            joint.SetVelocity(*m_ecm, {cmd.speed});
-        }
-        else {
-            LOG_ERROR_S << "Received command that is neither a pure effort, "
-                        << "position or speed" << std::endl;
-            LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
-                        << " e=" << cmd.effort << " r=" << cmd.raw
-                        << " a=" << cmd.acceleration << std::endl;
-            return exception(INVALID_JOINT_COMMAND);
+        switch (target_interface) {
+            case base::JointState::EFFORT:
+                joint.SetForce(*m_ecm, {cmd.effort});
+                break;
+            case base::JointState::POSITION:
+                joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
+                break;
+            case base::JointState::SPEED:
+                joint.SetVelocity(*m_ecm, {cmd.speed});
+                break;
+            default:
+                LOG_ERROR_S << "Unsupported joint control mode: " << target_interface << std::endl;
+                return exception(INVALID_JOINT_COMMAND);
         }
     }
 }
