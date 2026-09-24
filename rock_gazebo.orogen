@@ -116,7 +116,7 @@ task_context 'ModelTask', subclasses: 'BaseTask' do
     # inclusion of models.
     output_port 'joints_samples', '/base/samples/Joints'
 
-    exception_states 'INVALID_JOINT_COMMAND'
+    exception_states 'INVALID_JOINT_COMMAND', 'INVALID_JOINT_CONTROL_MODE'
 end
 
 task_context 'SensorTask', subclasses: 'BaseTask' do

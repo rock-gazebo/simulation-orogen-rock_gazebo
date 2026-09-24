@@ -125,6 +125,10 @@ namespace rock_gazebo {
                     "empty, or of the same size of the joints");
             }
         }
+
+        bool isValidControlMode(base::JointState::MODE const& mode) const;
+        void validateControlModesVector(std::vector<base::JointState::MODE> const& control_modes) const;
+
         void setupLinks();
         void warpModel(base::samples::RigidBodyState const& modelPose);
         void updateLinks(base::Time const& time);

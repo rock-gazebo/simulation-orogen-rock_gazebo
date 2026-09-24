@@ -89,6 +89,26 @@ void ModelTask::InternalJointExport::addJoint(Entity joint, std::string name)
     joints_out.elements.push_back(base::JointState::Effort(0.0));
 }
 
+bool ModelTask::isValidControlMode(base::JointState::MODE const& mode) const
+{
+    return mode == base::JointState::EFFORT ||
+              mode == base::JointState::POSITION ||
+              mode == base::JointState::SPEED;
+}
+
+void ModelTask::validateControlModesVector(std::vector<base::JointState::MODE> const& control_modes) const
+{
+    for (auto const& mode : control_modes) {
+        if (!isValidControlMode(mode) && mode != base::JointState::UNSET) {
+            throw std::invalid_argument(
+                "ModelTask: unsupported joint control mode requested. Supported modes are EFFORT, "
+                "POSITION, SPEED. Set the control_modes field of 'sdf_export_joint' to one of "
+                "these values."
+            );
+        }
+    }
+}
+
 void ModelTask::setupJoints()
 {
     JointExportSetup exported_joints;
@@ -111,6 +131,7 @@ void ModelTask::setupJoints()
             export_size,
             "control_modes"
         );
+        validateControlModesVector(export_request.control_modes);
 
         InternalJointExport export_setup;
         for (auto const& gz_joint_name : export_request.joints) {
@@ -407,13 +428,15 @@ void ModelTask::readExportedJointCmd(base::Time const& time,
         auto joint = Joint(exported_joint.gazebo_joints[i]);
         double position_offset = exported_joint.position_offsets[i];
 
-        base::JointState::MODE target_interface = exported_joint.control_modes[i];
-        if (target_interface == base::JointState::UNSET) {
+        base::JointState::MODE control_mode = exported_joint.control_modes[i];
+        if (control_mode == base::JointState::UNSET) {
             try {
-                target_interface = cmd.getMode();
+                control_mode = cmd.getMode();
             } catch (std::runtime_error const& e) {
-                LOG_ERROR_S << "Received command that is neither a pure effort, "
-                            << "position or speed" << std::endl;
+                LOG_ERROR_S << "ModelTask: received command that is neither a pure effort, "
+                            << "position or speed. Set the control_modes field of "
+                            << "'sdf_export_joint' explicitly to select the desired mode."
+                            << std::endl;
                 LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
                             << " e=" << cmd.effort << " r=" << cmd.raw
                             << " a=" << cmd.acceleration << std::endl;
@@ -421,19 +444,34 @@ void ModelTask::readExportedJointCmd(base::Time const& time,
             }
         }
 
-        switch (target_interface) {
+        if (!isValidControlMode(control_mode)) {
+            LOG_ERROR_S << "ModelTask: unsupported joint control mode requested. Supported modes "
+                << "are EFFORT, POSITION, SPEED. Set the control_modes field of "
+                << "'sdf_export_joint' to one of these values." << std::endl;
+            return exception(INVALID_JOINT_CONTROL_MODE);
+        }
+
+        const double cmd_value = cmd.getField(control_mode);
+        if (base::isUnset(cmd_value)) {
+            LOG_ERROR_S << "Input control command does not have the expected field set ("
+                << control_mode << ")" << std::endl;
+            return exception(INVALID_JOINT_COMMAND);
+        }
+
+        switch (control_mode) {
             case base::JointState::EFFORT:
-                joint.SetForce(*m_ecm, {cmd.effort});
+                joint.SetForce(*m_ecm, {cmd_value});
                 break;
             case base::JointState::POSITION:
-                joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
+                joint.ResetPosition(*m_ecm, {cmd_value - position_offset});
                 break;
             case base::JointState::SPEED:
-                joint.SetVelocity(*m_ecm, {cmd.speed});
+                joint.SetVelocity(*m_ecm, {cmd_value});
                 break;
-            default:
-                LOG_ERROR_S << "Unsupported joint control mode: " << target_interface << std::endl;
-                return exception(INVALID_JOINT_COMMAND);
+            case base::JointState::RAW:
+            case base::JointState::ACCELERATION:
+            case base::JointState::UNSET:
+                break;
         }
     }
 }
