@@ -22,6 +22,7 @@
 #include <stdexcept>
 
 #include "Helpers.hpp"
+#include "base/JointState.hpp"
 
 using namespace std;
 using namespace gz;
@@ -88,6 +89,26 @@ void ModelTask::InternalJointExport::addJoint(Entity joint, std::string name)
     joints_out.elements.push_back(base::JointState::Effort(0.0));
 }
 
+bool ModelTask::isValidControlMode(base::JointState::MODE const& mode) const
+{
+    return mode == base::JointState::EFFORT ||
+              mode == base::JointState::POSITION ||
+              mode == base::JointState::SPEED;
+}
+
+void ModelTask::validateControlModesVector(std::vector<base::JointState::MODE> const& control_modes) const
+{
+    for (auto const& mode : control_modes) {
+        if (!isValidControlMode(mode) && mode != base::JointState::UNSET) {
+            throw std::invalid_argument(
+                "ModelTask: unsupported joint control mode requested. Supported modes are EFFORT, "
+                "POSITION, SPEED. Set the control_modes field of 'sdf_export_joint' to one of "
+                "these values."
+            );
+        }
+    }
+}
+
 void ModelTask::setupJoints()
 {
     JointExportSetup exported_joints;
@@ -100,13 +121,17 @@ void ModelTask::setupJoints()
         string prefix = export_request.prefix;
         size_t export_size = export_request.joints.size();
 
-        if (!export_request.position_offsets.empty()) {
-            if (export_request.position_offsets.size() != export_size) {
-                throw std::invalid_argument(
-                    "ModelTask: joint export position_offsets field must either be "
-                    "empty, or of the same size of the joints");
-            }
-        }
+        validateExportFieldSize(
+            export_request.position_offsets,
+            export_size,
+            "position_offsets"
+        );
+        validateExportFieldSize(
+            export_request.control_modes,
+            export_size,
+            "control_modes"
+        );
+        validateControlModesVector(export_request.control_modes);
 
         InternalJointExport export_setup;
         for (auto const& gz_joint_name : export_request.joints) {
@@ -143,6 +168,13 @@ void ModelTask::setupJoints()
         }
         else {
             export_setup.position_offsets = export_request.position_offsets;
+        }
+        if (export_request.control_modes.empty()) {
+            export_setup.control_modes.resize(
+                export_setup.gazebo_joints.size(), base::JointState::UNSET);
+        }
+        else {
+            export_setup.control_modes = export_request.control_modes;
         }
         exported_joints.push_back(export_setup);
     }
@@ -396,23 +428,50 @@ void ModelTask::readExportedJointCmd(base::Time const& time,
         auto joint = Joint(exported_joint.gazebo_joints[i]);
         double position_offset = exported_joint.position_offsets[i];
 
-        // Apply effort to joint
-        if (cmd.isEffort()) {
-            joint.SetForce(*m_ecm, {cmd.effort});
+        base::JointState::MODE control_mode = exported_joint.control_modes[i];
+        if (control_mode == base::JointState::UNSET) {
+            try {
+                control_mode = cmd.getMode();
+            } catch (std::runtime_error const& e) {
+                LOG_ERROR_S << "ModelTask: received command that is neither a pure effort, "
+                            << "position or speed. Set the control_modes field of "
+                            << "'sdf_export_joint' explicitly to select the desired mode."
+                            << std::endl;
+                LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
+                            << " e=" << cmd.effort << " r=" << cmd.raw
+                            << " a=" << cmd.acceleration << std::endl;
+                return exception(INVALID_JOINT_COMMAND);
+            }
         }
-        else if (cmd.isPosition()) {
-            joint.ResetPosition(*m_ecm, {cmd.position - position_offset});
+
+        if (!isValidControlMode(control_mode)) {
+            LOG_ERROR_S << "ModelTask: unsupported joint control mode requested. Supported modes "
+                << "are EFFORT, POSITION, SPEED. Set the control_modes field of "
+                << "'sdf_export_joint' to one of these values." << std::endl;
+            return exception(INVALID_JOINT_CONTROL_MODE);
         }
-        else if (cmd.isSpeed()) {
-            joint.SetVelocity(*m_ecm, {cmd.speed});
-        }
-        else {
-            LOG_ERROR_S << "Received command that is neither a pure effort, "
-                        << "position or speed" << std::endl;
-            LOG_ERROR_S << "p=" << cmd.position << " s=" << cmd.speed
-                        << " e=" << cmd.effort << " r=" << cmd.raw
-                        << " a=" << cmd.acceleration << std::endl;
+
+        const double cmd_value = cmd.getField(control_mode);
+        if (base::isUnset(cmd_value)) {
+            LOG_ERROR_S << "Input control command does not have the expected field set ("
+                << control_mode << ")" << std::endl;
             return exception(INVALID_JOINT_COMMAND);
+        }
+
+        switch (control_mode) {
+            case base::JointState::EFFORT:
+                joint.SetForce(*m_ecm, {cmd_value});
+                break;
+            case base::JointState::POSITION:
+                joint.ResetPosition(*m_ecm, {cmd_value - position_offset});
+                break;
+            case base::JointState::SPEED:
+                joint.SetVelocity(*m_ecm, {cmd_value});
+                break;
+            case base::JointState::RAW:
+            case base::JointState::ACCELERATION:
+            case base::JointState::UNSET:
+                break;
         }
     }
 }

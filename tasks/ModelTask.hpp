@@ -88,6 +88,8 @@ namespace rock_gazebo {
 
             std::vector<double> position_offsets;
 
+            std::vector<base::JointState::MODE> control_modes;
+
             InternalJointExport()
                 : permanent(false)
                 , in_port(nullptr)
@@ -112,6 +114,21 @@ namespace rock_gazebo {
             std::string const& user_value);
         void validateExportRequestPortName(std::set<std::string> const& used_names,
             std::string const& port_name);
+        template <typename T>
+        void validateExportFieldSize(std::vector<T> const& field,
+            size_t expected_size,
+            std::string const& field_name)
+        {
+            if (!field.empty() && field.size() != expected_size) {
+                throw std::invalid_argument(
+                    "ModelTask: joint export " + field_name + " field must either be "
+                    "empty, or of the same size of the joints");
+            }
+        }
+
+        bool isValidControlMode(base::JointState::MODE const& mode) const;
+        void validateControlModesVector(std::vector<base::JointState::MODE> const& control_modes) const;
+
         void setupLinks();
         void warpModel(base::samples::RigidBodyState const& modelPose);
         void updateLinks(base::Time const& time);
