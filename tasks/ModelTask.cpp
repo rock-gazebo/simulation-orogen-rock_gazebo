@@ -220,6 +220,7 @@ ModelTask::InternalJointExport ModelTask::createAllJointsExport()
         });
 
     all_joints.position_offsets.resize(all_joints.gazebo_joints.size(), 0);
+    all_joints.control_modes.resize(all_joints.gazebo_joints.size(), base::JointState::UNSET);
 
     return all_joints;
 }
